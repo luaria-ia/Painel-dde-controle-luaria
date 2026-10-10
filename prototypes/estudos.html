@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Estudos — Protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  /* Mesmos tokens de src/index.css */
+  :root {
+    --bg: #f6f5f1; --surface: #ffffff; --surface-2: #f1f0ec; --line: #e6e4de; --line-strong: #d6d3cb;
+    --fg: #1b1c19; --muted: #5f625b; --subtle: #8d8f88;
+    --accent: #1f5f55; --accent-hover: #184c44; --accent-fg: #f7f5ef; --accent-soft: #1f5f5514; --ring: #1f5f5566;
+    --shadow: 0 1px 2px rgb(20 22 18 / 0.04), 0 1px 1px rgb(20 22 18 / 0.03);
+    --shadow-lg: 0 12px 32px -8px rgb(20 22 18 / 0.18), 0 2px 6px rgb(20 22 18 / 0.06);
+    --ok: #059669; --warn: #b45309;
+    color-scheme: light;
+  }
+  .dark {
+    --bg: #0e100f; --surface: #151816; --surface-2: #1b1f1d; --line: #252a27; --line-strong: #323834;
+    --fg: #ebece8; --muted: #a3a7a0; --subtle: #747971;
+    --accent: #5cbfae; --accent-hover: #74ccbd; --accent-fg: #0b1412; --accent-soft: #5cbfae1c; --ring: #5cbfae55;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 16px 40px -8px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
+    --ok: #34d399; --warn: #fbbf24;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--fg); font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; font-feature-settings: 'cv11', 'ss01'; font-size: 14px; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { background: none; border: 0; padding: 0; cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
+  svg.lucide { flex-shrink: 0; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  .muted { color: var(--muted); } .subtle { color: var(--subtle); }
+
+  /* ---------- Sidebar (igual à real) ---------- */
+  .sidebar { position: fixed; inset: 0 auto 0 0; width: 240px; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--bg); z-index: 30; }
+  .sb-top { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 16px; flex-shrink: 0; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo b { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .logo .ver { margin-left: 6px; border-radius: 4px; background: var(--surface-2); padding: 2px 4px; font-size: 10px; font-weight: 500; color: var(--subtle); }
+  .icon-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--muted); }
+  .icon-btn:hover { background: var(--surface-2); color: var(--fg); }
+  .icon-btn .lucide { width: 16px; height: 16px; }
+  .search { margin: 0 12px 8px; height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; font-size: 13px; color: var(--subtle); box-shadow: var(--shadow); }
+  .search span { flex: 1; text-align: left; }
+  .search kbd { border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; font-size: 10.5px; font-family: inherit; }
+  .sb-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 12px 12px; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+  .nav-item { display: flex; align-items: center; gap: 10px; height: 30px; padding: 0 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: var(--muted); transition: background .15s, color .15s; width: 100%; }
+  .nav-item:hover { background: var(--surface); color: var(--fg); }
+  .nav-item .lucide { width: 16px; height: 16px; color: var(--subtle); }
+  .nav-item .label { flex: 1; text-align: left; }
+  .nav-item .badge { font-size: 11px; color: var(--subtle); }
+  .nav-item[aria-current='page'] { background: var(--surface); color: var(--fg); box-shadow: var(--shadow), 0 0 0 1px var(--line); }
+  .nav-item[aria-current='page'] .lucide { color: var(--accent); }
+  .nav-item.project { height: 28px; font-size: 13px; font-weight: 400; }
+  .pdot { width: 8px; height: 8px; border-radius: 99px; margin: 0 4px; }
+  .divider { height: 1px; background: var(--line); margin: 8px 10px; }
+  .sec-head { width: 100%; height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 6px 0 10px; border-radius: 6px; font-size: 10.5px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--subtle); }
+  .sec-head:hover { color: var(--muted); }
+  .sec-head .title { flex: 1; text-align: left; }
+  .sec-head .chev { width: 14px; height: 14px; transition: transform .2s; opacity: .8; }
+  .section.open .chev { transform: rotate(180deg); }
+  .sec-head .new { font-size: 9.5px; letter-spacing: .02em; text-transform: none; background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 1px 5px; }
+  .sec-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .2s ease-out; }
+  .section.open .sec-panel { grid-template-rows: 1fr; }
+  .sec-inner { overflow: hidden; min-height: 0; display: flex; flex-direction: column; gap: 2px; visibility: hidden; }
+  .section.open .sec-inner { visibility: visible; padding: 2px 0 8px; }
+  .sb-foot { flex-shrink: 0; border-top: 1px solid var(--line); padding: 12px; display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 28px; height: 28px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; margin-left: 10px; }
+  .sb-foot .meta { flex: 1; line-height: 1.25; } .sb-foot .meta p { margin: 0; } .sb-foot .meta p:first-child { font-size: 13px; font-weight: 500; } .sb-foot .meta p:last-child { font-size: 11px; color: var(--subtle); }
+
+  /* ---------- Página ---------- */
+  main { padding-left: 240px; padding-bottom: 40px; }
+  .page { max-width: 1152px; margin: 0 auto; padding: 40px 40px 0; }
+  .ph { margin-bottom: 32px; display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; }
+  .crumbs { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--subtle); margin-bottom: 8px; flex-wrap: wrap; }
+  .crumbs a { cursor: pointer; } .crumbs a:hover { color: var(--fg); } .crumbs .cur { color: var(--muted); }
+  .crumbs .lucide { width: 14px; height: 14px; }
+  h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ph .desc { margin: 4px 0 0; font-size: 14px; color: var(--muted); max-width: 640px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  h2.sec { font-size: 15px; font-weight: 600; margin: 32px 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  h2.sec small { font-size: 13px; font-weight: 400; color: var(--subtle); }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+  .card-h { padding: 16px 20px 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .card-h h3 { margin: 0; font-size: 14px; font-weight: 600; }
+  .card-h p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+  .card-b { padding: 0 20px 18px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 8px; font-size: 14px; font-weight: 500; white-space: nowrap; transition: background .15s, border-color .15s; user-select: none; }
+  .btn .lucide { width: 16px; height: 16px; }
+  .btn.sm { height: 32px; padding: 0 10px; font-size: 13px; gap: 6px; border-radius: 6px; }
+  .btn.sm .lucide { width: 14px; height: 14px; }
+  .btn.primary { background: var(--accent); color: var(--accent-fg); box-shadow: var(--shadow); }
+  .btn.primary:hover { background: var(--accent-hover); }
+  .btn.secondary { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .btn.secondary:hover { background: var(--surface-2); border-color: var(--line-strong); }
+  .btn.ghost { color: var(--muted); } .btn.ghost:hover { background: var(--surface-2); color: var(--fg); }
+  .btn.done { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); }
+  .btn[disabled] { opacity: .5; pointer-events: none; }
+
+  .grid { display: grid; gap: 12px; }
+  .stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .stat { padding: 16px; display: flex; flex-direction: column; }
+  .stat .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .stat .lbl { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .stat .ic { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); }
+  .stat .ic .lucide { width: 14px; height: 14px; }
+  .stat .val { margin-top: 12px; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+  .stat .hint { margin-top: 4px; font-size: 12px; color: var(--subtle); }
+
+  .bar { height: 6px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+  .bar > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .4s cubic-bezier(.2,.8,.2,1); }
+  .pill { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .pill.ns { background: var(--surface-2); color: var(--muted); }
+  .pill.ip { background: color-mix(in srgb, var(--warn) 13%, transparent); color: var(--warn); }
+  .pill.dn { background: color-mix(in srgb, var(--ok) 13%, transparent); color: var(--ok); }
+  .pill.soft { background: var(--surface-2); color: var(--muted); font-weight: 400; }
+
+  /* Trilhas */
+  .tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .track { padding: 20px; display: flex; flex-direction: column; gap: 14px; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+  .track:hover { border-color: var(--line-strong); box-shadow: var(--shadow-lg); }
+  .ticon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--tc); background: color-mix(in srgb, var(--tc) 12%, transparent); flex-shrink: 0; }
+  .ticon .lucide { width: 20px; height: 20px; }
+  .ticon.lg { width: 48px; height: 48px; border-radius: 12px; } .ticon.lg .lucide { width: 24px; height: 24px; }
+  .track h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .track p.d { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+  .track .meta { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--subtle); }
+  .track .meta span { display: inline-flex; align-items: center; gap: 5px; } .track .meta .lucide { width: 13px; height: 13px; }
+  .pct { display: flex; align-items: center; gap: 10px; } .pct .bar { flex: 1; } .pct b { font-size: 13px; font-weight: 600; min-width: 36px; text-align: right; }
+  .planned { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; font-size: 12.5px; color: var(--subtle); }
+  .planned .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px dashed var(--line-strong); border-radius: 8px; color: var(--muted); }
+  .planned .chip .lucide { width: 13px; height: 13px; color: var(--subtle); }
+
+  /* Fluxo aprender → cliente */
+  .flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .flow .st { padding: 14px 16px; position: relative; }
+  .flow .st + .st { border-left: 1px solid var(--line); }
+  .flow .st .k { font-size: 11px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: var(--subtle); display: flex; align-items: center; gap: 6px; }
+  .flow .st .k .lucide { width: 13px; height: 13px; }
+  .flow .st .v { margin-top: 6px; font-size: 18px; font-weight: 600; }
+  .flow .st .h { font-size: 12px; color: var(--subtle); margin-top: 2px; }
+  .flow .st.link { cursor: pointer; } .flow .st.link:hover { background: var(--surface-2); }
+
+  /* Listas */
+  .rows > * + * { border-top: 1px solid var(--line); }
+  .row { display: flex; align-items: center; gap: 14px; padding: 14px 20px; }
+  .row.click { cursor: pointer; } .row.click:hover { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+  .num { font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--subtle); text-transform: uppercase; }
+  .row .main { flex: 1; min-width: 0; }
+  .row .t { font-weight: 500; font-size: 14px; }
+  .row .s { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .row .side { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .mini { width: 120px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--subtle); text-align: right; }
+  .check { width: 20px; height: 20px; border-radius: 99px; border: 1.5px solid var(--line-strong); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: transparent; transition: background .15s, border-color .15s; }
+  .check .lucide { width: 12px; height: 12px; stroke-width: 3; }
+  .check.on { background: var(--ok); border-color: var(--ok); color: #fff; }
+  button.check:hover { border-color: var(--ok); }
+
+  .two { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .weights { display: flex; flex-direction: column; gap: 12px; }
+  .weights .w { display: grid; grid-template-columns: 110px 1fr 70px; align-items: center; gap: 10px; font-size: 13px; }
+  .weights .w .p { text-align: right; color: var(--muted); }
+
+  /* Aula / exercício */
+  .lesson { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; }
+  .block { padding: 18px 20px; }
+  .block + .block { border-top: 1px solid var(--line); }
+  .block h4 { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--subtle); display: flex; align-items: center; gap: 8px; }
+  .block h4 .n { width: 18px; height: 18px; border-radius: 5px; background: var(--surface-2); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; font-size: 10.5px; letter-spacing: 0; }
+  .block p { margin: 0 0 8px; line-height: 1.65; color: var(--fg); } .block p:last-child { margin-bottom: 0; }
+  .block ul { margin: 0; padding-left: 18px; line-height: 1.7; }
+  .block .tbd { color: var(--subtle); font-style: italic; }
+  .callout { background: var(--surface-2); border-radius: 8px; padding: 12px 14px; line-height: 1.6; }
+  .checklist { display: flex; flex-direction: column; gap: 2px; }
+  .checklist label { display: flex; align-items: flex-start; gap: 10px; padding: 7px 8px; border-radius: 6px; cursor: pointer; line-height: 1.45; }
+  .checklist label:hover { background: var(--surface-2); }
+  .checklist input { margin: 2px 0 0; accent-color: var(--accent); width: 15px; height: 15px; }
+  .checklist label.on span { color: var(--subtle); text-decoration: line-through; }
+  textarea, input[type=text], input[type=search], input[type=date], input[type=number], input[type=url], select {
+    width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  textarea:focus, input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+  textarea.tall { min-height: 280px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px; }
+  .saved { font-size: 12px; color: var(--subtle); display: inline-flex; align-items: center; gap: 5px; }
+  .saved .lucide { width: 12px; height: 12px; }
+  .toc { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .toc .lnk { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--muted); cursor: pointer; text-align: left; width: 100%; }
+  .toc .lnk:hover { background: var(--surface-2); color: var(--fg); }
+  .toc .lnk.cur { background: var(--surface-2); color: var(--fg); font-weight: 500; }
+  .toc .lnk .check { width: 16px; height: 16px; } .toc .lnk .check .lucide { width: 10px; height: 10px; }
+
+  /* Biblioteca */
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .toolbar .grow { flex: 1; min-width: 200px; position: relative; }
+  .toolbar .grow .lucide { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--subtle); }
+  .toolbar .grow input { padding-left: 32px; height: 36px; }
+  .toolbar select { width: auto; height: 36px; padding: 0 10px; }
+  .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 9px; background: var(--surface-2); flex-wrap: wrap; }
+  .seg button { height: 28px; padding: 0 10px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+  .seg button[aria-pressed='true'] { background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
+  .lib { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .li { padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 170px; }
+  .li .hd { display: flex; align-items: center; gap: 8px; }
+  .li .ty { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .li .ty .lucide { width: 13px; height: 13px; color: var(--accent); }
+  .li h3 { margin: 0; font-size: 14px; font-weight: 600; }
+  .li .body { font-size: 13px; color: var(--muted); line-height: 1.55; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; }
+  .li .ft { display: flex; align-items: center; gap: 4px; }
+  .li .ft .sp { flex: 1; display: flex; gap: 4px; flex-wrap: wrap; }
+
+  .empty { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 14px; }
+  .empty .lucide { width: 28px; height: 28px; color: var(--subtle); margin-bottom: 8px; }
+
+  /* Gráfico */
+  .chart { display: flex; align-items: flex-end; gap: 6px; height: 150px; padding-top: 8px; }
+  .chart .c { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+  .chart .b { width: 100%; max-width: 28px; border-radius: 4px 4px 2px 2px; background: var(--accent); min-height: 2px; opacity: .9; }
+  .chart .b.z { background: var(--line); }
+  .chart .x { font-size: 10.5px; color: var(--subtle); }
+  .chart .c:hover .b { opacity: 1; }
+
+  /* Modal + toast */
+  .overlay { position: fixed; inset: 0; background: rgb(0 0 0 / .4); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; animation: fade .15s ease-out; }
+  .modal { width: 100%; max-width: 520px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-lg); animation: pop .18s cubic-bezier(.2,.8,.2,1); max-height: calc(100vh - 32px); overflow: auto; }
+  .modal .mh { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 0; }
+  .modal .mh h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .modal form { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; } .field > span { font-size: 13px; font-weight: 500; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal .mf { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 9px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 60; box-shadow: var(--shadow-lg); animation: pop .18s; display: flex; align-items: center; gap: 8px; }
+  .toast .lucide { width: 14px; height: 14px; }
+  @keyframes fade { from { opacity: 0 } }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98) } }
+  .toast { animation: none; }
+
+  /* Controles do protótipo */
+  .proto { position: fixed; right: 16px; bottom: 16px; z-index: 40; display: flex; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px; box-shadow: var(--shadow-lg); align-items: center; }
+  .proto span { font-size: 11px; color: var(--subtle); padding: 0 6px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+
+  .mobile-top { display: none; }
+  @media (max-width: 1180px) { .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } .lib { grid-template-columns: repeat(2, minmax(0, 1fr)); } .flow { grid-template-columns: repeat(3, minmax(0, 1fr)); } .flow .st:nth-child(4) { border-left: 0; } .flow .st:nth-child(n+4) { border-top: 1px solid var(--line); } }
+  @media (max-width: 1023px) {
+    .sidebar { display: none; } main { padding-left: 0; } .page { padding: 20px 16px 0; }
+    .mobile-top { display: flex; position: sticky; top: 0; z-index: 30; height: 52px; align-items: center; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); overflow-x: auto; }
+    .mobile-top .nav-item { width: auto; flex-shrink: 0; }
+    .two, .lesson { grid-template-columns: minmax(0, 1fr); } .toc { position: static; }
+  }
+  @media (max-width: 700px) {
+    .stats, .tracks, .lib { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .tracks, .lib { grid-template-columns: minmax(0, 1fr); }
+    .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } .flow .st { border-left: 0 !important; border-top: 1px solid var(--line); } .flow .st:nth-child(-n+2) { border-top: 0; } .flow .st:nth-child(even) { border-left: 1px solid var(--line) !important; }
+    .row { padding: 12px 14px; flex-wrap: wrap; } .mini { width: 100%; text-align: left; }
+    .weights .w { grid-template-columns: 90px 1fr 56px; } .field-row { grid-template-columns: 1fr; }
+    h1 { font-size: 22px; } .proto span { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+<aside class="sidebar" aria-label="Barra lateral">
+  <div class="sb-top">
+    <div class="logo">
+      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)" /><path d="M9 9h6v6H9zM17 9h6v6h-6zM9 17h6v6H9z" fill="var(--accent-fg)" /><path d="M17 17h6v6h-6z" fill="var(--accent-fg)" opacity="0.45" /></svg>
+      <div><b>Business OS</b><span class="ver">V3</span></div>
+    </div>
+    <button class="icon-btn" aria-label="Notificações"><i data-lucide="bell"></i></button>
+  </div>
+  <button class="search" type="button"><i data-lucide="search" style="width:14px;height:14px"></i><span>Buscar…</span><kbd>⌘K</kbd></button>
+  <div class="sb-scroll"><nav id="nav" aria-label="Navegação principal"></nav></div>
+  <div class="sb-foot"><div class="avatar">AS</div><div class="meta"><p>André</p><p>andre@exemplo.com</p></div><button class="icon-btn" aria-label="Sair"><i data-lucide="log-out"></i></button></div>
+</aside>
+
+<main>
+  <nav class="mobile-top" id="mobile-nav" aria-label="Aprendizado"></nav>
+  <div class="page" id="page"></div>
+</main>
+
+<div class="proto" role="group" aria-label="Controles do protótipo">
+  <span>Protótipo</span>
+  <button class="icon-btn" id="theme" title="Alternar tema" aria-label="Alternar tema"><i data-lucide="moon"></i></button>
+  <button class="icon-btn" id="reset" title="Limpar dados de exemplo" aria-label="Limpar dados de exemplo"><i data-lucide="eraser"></i></button>
+  <button class="icon-btn" id="seed" title="Recarregar dados de exemplo" aria-label="Recarregar dados de exemplo"><i data-lucide="rotate-ccw"></i></button>
+</div>
+
+<div id="modal-root"></div>
+
+<script>
+/* =====================================================================
+ * 1. CATÁLOGO — trilhas baseadas em dados (no app: src/data/studyTracks.ts)
+ *    Nova trilha = um objeto a mais. Nada mais precisa mudar.
+ * ===================================================================== */
+const L = (title, objective, extra = {}) => ({ title, objective, ...extra })
+const M = (title, description, lessons, exercise) => ({ title, description, lessons, exercise })
+
+const STUDY_TRACKS = [
+  {
+    id: 'social-media',
+    title: 'Social Media',
+    icon: 'smartphone',
+    color: '#d6457c',
+    description: 'Aprenda a criar, planejar, executar e analisar estratégias de conteúdo para clientes.',
+    modules: [
+      M('Fundamentos de Social Media', 'O que o profissional faz, como as plataformas funcionam e quais formatos existem.', [
+        L('O papel do social media', 'Entender o que um social media faz no dia a dia, o que o cliente espera receber e como isso vira um serviço vendável.', {
+          content: [
+            'Social media é o profissional responsável por transformar os objetivos de um negócio em presença nas redes sociais. O trabalho vai muito além de "postar": envolve estratégia (o que dizer, para quem e por quê), execução (criar e publicar) e análise (medir e ajustar).',
+            'Para o cliente, o valor está no resultado: mais pessoas conhecendo a marca, mais mensagens, mais vendas ou agendamentos. Por isso, todo conteúdo precisa estar ligado a um objetivo de negócio.',
+            'Na prática, o serviço costuma ser vendido como um pacote mensal com escopo claro: quantidade de posts e Reels, stories, gestão de comentários e um relatório de resultados.',
+          ],
+          concepts: ['Estratégia × execução', 'Objetivo de negócio por trás de cada post', 'Calendário editorial', 'Métricas de resultado × métricas de vaidade', 'Escopo do serviço (o que está e o que não está incluso)'],
+          example: 'Uma clínica odontológica contrata um pacote de 12 posts por mês. O social media define 3 pilares (educação, bastidores e prova social), monta o calendário, cria posts e Reels e entrega um relatório mensal com alcance, mensagens recebidas e agendamentos gerados pelo Instagram.',
+          practice: 'Escolha 3 negócios locais da sua cidade. Para cada um, anote: o que posta, com que frequência, se existe uma linha visual e o que você melhoraria primeiro.',
+          exercise: 'Descreva, em até 5 linhas, o serviço de social media que você ofereceria a um negócio local: o que entrega, com que frequência e como vai medir o resultado.',
+          checklist: ['Li o conteúdo da aula', 'Entendi a diferença entre estratégia e execução', 'Analisei 3 perfis de negócios reais', 'Escrevi a descrição do meu serviço'],
+        }),
+        L('Como funcionam os algoritmos', 'Entender os sinais que fazem um conteúdo ser distribuído (retenção, interações, compartilhamentos e salvamentos).'),
+        L('Plataformas e formatos', 'Conhecer Instagram, TikTok, LinkedIn e YouTube Shorts e quando usar post, carrossel, Reels e stories.'),
+      ], { title: 'Diagnóstico de um perfil real', instructions: 'Escolha um perfil comercial real (de preferência um negócio local) e faça um diagnóstico completo da presença dele no Instagram.', checklist: ['Analisei bio, foto e destaques', 'Avaliei os últimos 12 posts', 'Identifiquei pontos fortes', 'Listei 5 melhorias prioritárias'], template: 'PERFIL ANALISADO: @\nNICHO:\n\n1. Primeira impressão (bio, foto, destaques):\n\n2. Frequência e formatos usados:\n\n3. Linha visual:\n\n4. Pontos fortes:\n-\n\n5. 5 melhorias prioritárias:\n1.\n2.\n3.\n4.\n5.' }),
+      M('Estratégia e posicionamento', 'Como definir objetivos, posicionamento e pilares de conteúdo.', [
+        L('Objetivos e metas SMART', 'Transformar desejos vagos do cliente ("quero crescer") em metas mensuráveis.'),
+        L('Posicionamento de marca', 'Definir como a marca quer ser percebida e o que a diferencia.'),
+        L('Pilares de conteúdo', 'Organizar os temas recorrentes da marca em 3 a 5 pilares.'),
+      ], { title: 'Estratégia em uma página', instructions: 'Monte a estratégia resumida de uma marca: objetivo, público, posicionamento e pilares.', checklist: ['Defini uma meta SMART', 'Escrevi o posicionamento', 'Criei de 3 a 5 pilares'], template: 'MARCA:\nOBJETIVO SMART:\nPÚBLICO:\nPOSICIONAMENTO (uma frase):\n\nPILARES DE CONTEÚDO:\n1.\n2.\n3.' }),
+      M('Persona e pesquisa de público', 'Quem é o público, o que ele sente e onde ele está.', [
+        L('Criando personas', 'Construir uma persona com dores, desejos, objeções e hábitos.'),
+        L('Pesquisa de público', 'Usar comentários, enquetes e buscas para validar a persona.'),
+        L('Análise de concorrentes', 'Mapear o que os concorrentes fazem bem e onde há espaço.'),
+      ], { title: 'Persona + 3 concorrentes', instructions: 'Crie a persona principal de uma marca e analise 3 concorrentes.', checklist: ['Persona completa', '3 concorrentes analisados', 'Oportunidades listadas'], template: 'PERSONA\nNome / idade / profissão:\nDores:\nDesejos:\nObjeções:\n\nCONCORRENTES\n1. @ — faz bem: / falha em:\n2. @ — faz bem: / falha em:\n3. @ — faz bem: / falha em:\n\nOPORTUNIDADES:' }),
+      M('Planejamento e calendário editorial', 'Como planejar o mês de conteúdo com consistência.', [
+        L('Calendário editorial', 'Montar um calendário mensal equilibrado entre pilares e formatos.'),
+        L('Frequência e mix de formatos', 'Definir quantos posts, Reels e stories fazem sentido para cada cliente.'),
+        L('Ferramentas de agendamento', 'Usar ferramentas para planejar, aprovar e agendar conteúdos.'),
+      ], { title: 'Calendário de 1 mês', instructions: 'Monte o calendário de um mês para uma marca fictícia.', checklist: ['12 conteúdos planejados', 'Pilares distribuídos', 'Formatos variados'], template: 'SEMANA 1\nSeg —\nQua —\nSex —\n\nSEMANA 2\nSeg —\nQua —\nSex —\n\nSEMANA 3\n...\n\nSEMANA 4\n...' }),
+      M('Criação de conteúdo', 'Posts, carrosséis e stories que geram atenção e valor.', [
+        L('Posts que param o scroll', 'Aplicar contraste, hierarquia e uma mensagem clara em posts estáticos.'),
+        L('Carrosséis educativos', 'Estruturar carrosséis com gancho, desenvolvimento e CTA.'),
+        L('Stories e engajamento', 'Usar stories para relacionamento, bastidores e vendas.'),
+      ], { title: '3 carrosséis', instructions: 'Crie o roteiro de 3 carrosséis (um por pilar).', checklist: ['3 roteiros escritos', 'Cada um com gancho forte', 'Cada um com CTA'], template: 'CARROSSEL 1 — Pilar:\nSlide 1 (gancho):\nSlides 2–6:\nSlide final (CTA):\n\nCARROSSEL 2 — Pilar:\n...\n\nCARROSSEL 3 — Pilar:\n...' }),
+      M('Reels e vídeos curtos', 'Roteiro, gravação e edição de vídeos curtos.', [
+        L('Roteiro e gancho nos 3 primeiros segundos', 'Escrever roteiros curtos com gancho, conteúdo e CTA.'),
+        L('Gravação e edição no celular', 'Gravar e editar com qualidade usando só o celular.'),
+        L('Tendências e áudios', 'Adaptar tendências ao posicionamento da marca sem perder identidade.'),
+      ], { title: 'Roteiro de 3 Reels', instructions: 'Escreva o roteiro de 3 Reels de até 30 segundos.', checklist: ['Gancho definido', 'Roteiro cena a cena', 'Legenda com CTA'], template: 'REELS 1\nGancho (0–3s):\nCena 2:\nCena 3:\nCTA:\nLegenda:\n\nREELS 2\n...\n\nREELS 3\n...' }),
+      M('Copywriting para redes sociais', 'Ganchos, estruturas de copy e chamadas para ação.', [
+        L('Ganchos e headlines', 'Escrever primeiras frases que prendem a atenção.'),
+        L('Estruturas de copy (AIDA e PAS)', 'Usar estruturas clássicas para legendas e anúncios.'),
+        L('CTAs e legendas', 'Escrever chamadas para ação claras e alinhadas ao objetivo.'),
+      ], { title: '10 ganchos + 2 legendas', instructions: 'Escreva 10 ganchos e 2 legendas completas (AIDA e PAS).', checklist: ['10 ganchos', 'Legenda AIDA', 'Legenda PAS'], template: 'GANCHOS\n1.\n2.\n3.\n4.\n5.\n6.\n7.\n8.\n9.\n10.\n\nLEGENDA AIDA\nAtenção:\nInteresse:\nDesejo:\nAção:\n\nLEGENDA PAS\nProblema:\nAgitação:\nSolução:' }),
+      M('Métricas, relatórios e crescimento', 'Medir, reportar ao cliente e crescer com consistência.', [
+        L('Métricas que importam', 'Distinguir métricas de vaidade de métricas que indicam resultado.'),
+        L('Relatório mensal para o cliente', 'Montar um relatório simples, visual e orientado a decisões.'),
+        L('Estratégias de crescimento', 'Planejar ações de crescimento orgânico e colaborações.'),
+      ], { title: 'Relatório mensal', instructions: 'Monte um relatório mensal fictício com métricas, análise e próximos passos.', checklist: ['Métricas principais', 'Análise do que funcionou', 'Plano para o próximo mês'], template: 'RELATÓRIO — MÊS/ANO\n\nResumo:\n\nMétricas\nAlcance:\nSeguidores (+/-):\nInterações:\nMensagens/leads:\n\nO que funcionou:\nO que não funcionou:\n\nPróximo mês:' }),
+    ],
+    project: {
+      title: 'Projeto Final — Criar uma estratégia completa de Social Media para um cliente fictício',
+      description: 'Junte tudo o que aprendeu em uma estratégia completa, pronta para virar um case de portfólio.',
+      steps: ['Escolher nicho', 'Definir cliente', 'Criar persona', 'Analisar concorrentes', 'Definir posicionamento', 'Definir identidade', 'Criar pilares de conteúdo', 'Criar calendário', 'Criar posts', 'Criar Reels', 'Criar copies', 'Definir estratégia de crescimento', 'Definir métricas', 'Criar relatório', 'Montar case para portfólio'],
+    },
+  },
+  {
+    id: 'design-sites',
+    title: 'Design de Sites',
+    icon: 'monitor',
+    color: '#3b6fd8',
+    description: 'Aprenda UX, UI, estrutura, design e criação de sites e landing pages profissionais.',
+    modules: [
+      M('Fundamentos de Web Design', 'Como um site funciona e o que torna um site bom.', [L('Anatomia de um site'), L('O processo de um projeto web'), L('Analisando bons sites')], { title: 'Análise de 3 sites', instructions: 'Analise 3 sites de referência e anote o que funciona em cada um.', checklist: ['3 sites analisados', 'Pontos fortes anotados'] }),
+      M('UX e experiência do usuário', 'Pensar no usuário antes da estética.', [L('Princípios de UX'), L('Jornada do usuário'), L('Arquitetura da informação')], { title: 'Jornada do usuário', instructions: 'Desenhe a jornada de um visitante até a conversão.', checklist: ['Etapas definidas', 'Pontos de atrito mapeados'] }),
+      M('UI e design visual', 'Hierarquia, espaçamento, grids e componentes.', [L('Hierarquia visual'), L('Espaçamento e grids'), L('Componentes de interface')], { title: 'Redesenho de uma seção', instructions: 'Escolha uma seção de um site real e proponha um redesenho.', checklist: ['Antes e depois', 'Justificativa'] }),
+      M('Tipografia e cores', 'Escolher fontes e paletas com intenção.', [L('Tipografia para web'), L('Teoria das cores aplicada'), L('Criando um guia visual')], { title: 'Mini guia visual', instructions: 'Monte um mini guia visual (fontes, cores e exemplos de uso).', checklist: ['2 fontes', 'Paleta com 5 cores', 'Exemplos de uso'] }),
+      M('Wireframes', 'Estruturar páginas antes do visual.', [L('Do rascunho ao wireframe'), L('Wireframes de baixa e alta fidelidade'), L('Ferramentas de wireframe')], { title: 'Wireframe de uma home', instructions: 'Crie o wireframe de uma home page.', checklist: ['Todas as seções', 'Versão mobile'] }),
+      M('Landing Pages', 'Páginas focadas em uma única conversão.', [L('Estrutura de uma landing page'), L('Copy para landing pages'), L('Prova social e garantias')], { title: 'Estrutura de landing page', instructions: 'Estruture uma landing page para um serviço.', checklist: ['Seções definidas', 'Copy da dobra principal'] }),
+      M('Sites institucionais', 'Sites completos para empresas e profissionais.', [L('Páginas essenciais'), L('Navegação e menus'), L('SEO básico')], { title: 'Mapa do site', instructions: 'Monte o mapa de um site institucional.', checklist: ['Páginas listadas', 'Conteúdo de cada página'] }),
+      M('Responsividade', 'Sites que funcionam bem em qualquer tela.', [L('Mobile first'), L('Breakpoints e layouts fluidos'), L('Testando em vários dispositivos')], { title: 'Versão mobile', instructions: 'Adapte um layout desktop para o celular.', checklist: ['Layout mobile', 'Navegação adaptada'] }),
+      M('Conversão e CRO', 'Fazer o site gerar resultado.', [L('Princípios de conversão'), L('CTAs e formulários'), L('Testes A/B')], { title: 'Auditoria de conversão', instructions: 'Audite um site e proponha 5 melhorias de conversão.', checklist: ['5 melhorias', 'Prioridade definida'] }),
+      M('IA para criação de sites', 'Acelerar o processo com inteligência artificial.', [L('IA para copy e estrutura'), L('IA para layout e imagens'), L('Construtores com IA')], { title: 'Página criada com IA', instructions: 'Crie uma página usando IA do briefing ao layout.', checklist: ['Prompts documentados', 'Página publicada'] }),
+      M('Ferramentas', 'Figma, construtores e publicação.', [L('Figma essencial'), L('Construtores de sites'), L('Domínio e publicação')], { title: 'Publicar um site', instructions: 'Publique um site simples com domínio próprio ou gratuito.', checklist: ['Site no ar', 'Link salvo na Biblioteca'] }),
+      M('Projeto final', 'Do briefing à entrega de um site real.', [L('Briefing e planejamento'), L('Execução e entrega')], { title: 'Briefing do projeto final', instructions: 'Escreva o briefing do site que será seu projeto final.', checklist: ['Cliente definido', 'Objetivo e público', 'Páginas necessárias'] }),
+    ],
+    project: {
+      title: 'Projeto Final — Criar uma landing page profissional para um cliente fictício',
+      description: 'Do briefing à publicação, com case pronto para o portfólio.',
+      steps: ['Briefing do cliente', 'Pesquisa de referências', 'Arquitetura da informação', 'Wireframe', 'Guia visual (cores e tipografia)', 'Layout desktop', 'Layout mobile', 'Copy da página', 'Construção', 'Testes e ajustes de conversão', 'Publicação', 'Montar case para portfólio'],
+    },
+  },
+  // Trilhas planejadas: aparecem como "Próximas trilhas" até receberem módulos.
+  { id: 'ia-automacao', title: 'IA & Automação', icon: 'bot', planned: true },
+  { id: 'trafego-pago', title: 'Tráfego Pago', icon: 'trending-up', planned: true },
+  { id: 'vendas', title: 'Vendas & Prospecção', icon: 'handshake', planned: true },
+  { id: 'marketing', title: 'Marketing', icon: 'megaphone', planned: true },
+  { id: 'gestao', title: 'Gestão', icon: 'bar-chart-3', planned: true },
+]
+
+/* IDs estáveis derivados da posição (no app ficam explícitos no arquivo de dados) */
+for (const t of STUDY_TRACKS) {
+  ;(t.modules || []).forEach((m, mi) => {
+    m.id = `${t.id}.m${String(mi + 1).padStart(2, '0')}`
+    m.number = mi + 1
+    m.lessons.forEach((l, li) => (l.id = `${m.id}.a${li + 1}`))
+    m.exercise.id = `${m.id}.ex`
+  })
+  if (t.project) t.project.id = `${t.id}.proj`
+}
+const ACTIVE_TRACKS = STUDY_TRACKS.filter((t) => !t.planned)
+const trackById = (id) => STUDY_TRACKS.find((t) => t.id === id)
+
+const LIB_TYPES = [
+  { id: 'prompt', label: 'Prompts', one: 'Prompt', icon: 'sparkles' },
+  { id: 'template', label: 'Templates', one: 'Template', icon: 'layout-template' },
+  { id: 'referencia', label: 'Referências', one: 'Referência', icon: 'bookmark' },
+  { id: 'site', label: 'Sites', one: 'Site', icon: 'globe' },
+  { id: 'artigo', label: 'Artigos', one: 'Artigo', icon: 'newspaper' },
+  { id: 'video', label: 'Vídeos', one: 'Vídeo', icon: 'play-circle' },
+  { id: 'checklist', label: 'Checklists', one: 'Checklist', icon: 'list-checks' },
+  { id: 'material', label: 'Materiais', one: 'Material', icon: 'file-text' },
+]
+const libType = (id) => LIB_TYPES.find((t) => t.id === id) || LIB_TYPES[7]
+
+/* =====================================================================
+ * 2. PROGRESSO DO USUÁRIO — separado do catálogo
+ *    (protótipo: localStorage 'bos.studies.prototype'; no app: tabelas no Supabase)
+ * ===================================================================== */
+const STORE_KEY = 'bos.studies.prototype'
+const today = () => new Date().toISOString().slice(0, 10)
+const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10) }
+const uid = () => Math.random().toString(36).slice(2, 10)
+
+function emptyState() { return { lessons: {}, exercises: {}, projects: {}, hours: [], library: [] } }
+function demoState() {
+  const s = emptyState()
+  ;['social-media.m01.a1', 'social-media.m01.a2', 'social-media.m01.a3', 'social-media.m02.a1'].forEach((id, i) => (s.lessons[id] = { done: true, doneAt: daysAgo(4 - i), checks: [], notes: '' }))
+  s.exercises['social-media.m01.ex'] = { done: true, doneAt: daysAgo(2), answer: 'PERFIL ANALISADO: @clinicasorriso\nNICHO: odontologia\n\n1. Bio não diz o que a clínica faz nem onde fica…', checks: [0, 1, 2, 3] }
+  s.projects['social-media.proj'] = { steps: { 0: true, 1: true } }
+  s.hours = [
+    { id: uid(), date: today(), minutes: 90, trackId: 'social-media', note: 'Estudei planejamento de conteúdo.' },
+    { id: uid(), date: daysAgo(1), minutes: 60, trackId: 'social-media', note: 'Aula sobre algoritmos.' },
+    { id: uid(), date: daysAgo(2), minutes: 45, trackId: 'social-media', note: 'Exercício de diagnóstico de perfil.' },
+    { id: uid(), date: daysAgo(5), minutes: 30, trackId: 'social-media', note: '' },
+    { id: uid(), date: daysAgo(8), minutes: 75, trackId: 'social-media', note: 'Fundamentos.' },
+  ]
+  s.library = [
+    { id: uid(), type: 'prompt', title: 'Gerar 10 ganchos para Reels', trackId: 'social-media', url: '', tags: 'reels, copy', content: 'Você é um copywriter especialista em Reels. Crie 10 ganchos de até 8 palavras para um vídeo sobre [TEMA], para o público [PÚBLICO]. Use curiosidade, contraste e números.' },
+    { id: uid(), type: 'template', title: 'Relatório mensal de Social Media', trackId: 'social-media', url: '', tags: 'cliente, relatório', content: 'RELATÓRIO — MÊS/ANO\nResumo:\nAlcance:\nSeguidores:\nInterações:\nLeads:\nPróximos passos:' },
+    { id: uid(), type: 'site', title: 'Land-book — galeria de landing pages', trackId: 'design-sites', url: 'https://land-book.com', tags: 'referência, landing page', content: 'Galeria de referências de landing pages organizadas por categoria.' },
+    { id: uid(), type: 'checklist', title: 'Checklist antes de publicar um post', trackId: '', url: '', tags: 'qualidade', content: '- Gancho claro no início\n- Revisão de ortografia\n- CTA alinhado ao objetivo\n- Capa legível no feed\n- Hashtags e marcação' },
+  ]
+  s.demo = true
+  return s
+}
+function load() { try { const raw = localStorage.getItem(STORE_KEY); return raw ? JSON.parse(raw) : demoState() } catch { return demoState() } }
+let S = load()
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(S)) } catch {} }
+
+/* Cálculos puros (no app: src/lib/studies.ts, com testes) */
+const WEIGHTS = { lessons: 0.6, exercises: 0.25, project: 0.15 }
+function trackStats(t) {
+  const lessons = t.modules.flatMap((m) => m.lessons)
+  const exs = t.modules.map((m) => m.exercise)
+  const steps = t.project ? t.project.steps.length : 0
+  const lDone = lessons.filter((l) => S.lessons[l.id]?.done).length
+  const eDone = exs.filter((e) => S.exercises[e.id]?.done).length
+  const pDone = t.project ? Object.values(S.projects[t.project.id]?.steps || {}).filter(Boolean).length : 0
+  const lp = lessons.length ? lDone / lessons.length : 0, ep = exs.length ? eDone / exs.length : 0, pp = steps ? pDone / steps : 0
+  const progress = Math.round((lp * WEIGHTS.lessons + ep * WEIGHTS.exercises + pp * WEIGHTS.project) * 100)
+  const minutes = S.hours.filter((h) => h.trackId === t.id).reduce((n, h) => n + h.minutes, 0)
+  return { lessons: lessons.length, lDone, exs: exs.length, eDone, steps, pDone, lp, ep, pp, progress, minutes, projectDone: steps > 0 && pDone === steps, streak: streak(t.id) }
+}
+function moduleStats(m) {
+  const lDone = m.lessons.filter((l) => S.lessons[l.id]?.done).length
+  const exDone = !!S.exercises[m.exercise.id]?.done
+  const total = m.lessons.length + 1
+  return { lDone, exDone, pct: Math.round(((lDone + (exDone ? 1 : 0)) / total) * 100) }
+}
+function statusOf(pct) { return pct >= 100 ? ['dn', 'Concluído'] : pct > 0 ? ['ip', 'Em andamento'] : ['ns', 'Não iniciado'] }
+function activityDays(trackId) {
+  const days = new Set()
+  const inTrack = (id) => !trackId || id.startsWith(trackId + '.')
+  S.hours.forEach((h) => (!trackId || h.trackId === trackId) && days.add(h.date))
+  Object.entries(S.lessons).forEach(([id, v]) => v.done && v.doneAt && inTrack(id) && days.add(v.doneAt))
+  Object.entries(S.exercises).forEach(([id, v]) => v.done && v.doneAt && inTrack(id) && days.add(v.doneAt))
+  return days
+}
+/** Dias seguidos com estudo (horas registradas ou aula/exercício concluído). Hoje ainda vazio não quebra a sequência. */
+function streak(trackId) {
+  const days = activityDays(trackId)
+  let n = 0, i = days.has(today()) ? 0 : 1
+  while (days.has(daysAgo(i))) { n++; i++ }
+  return n
+}
+function overall() {
+  const all = ACTIVE_TRACKS.map(trackStats)
+  const sum = (k) => all.reduce((n, s) => n + s[k], 0)
+  const r = (a, b) => (b ? a / b : 0)
+  const progress = Math.round((r(sum('lDone'), sum('lessons')) * WEIGHTS.lessons + r(sum('eDone'), sum('exs')) * WEIGHTS.exercises + r(sum('pDone'), sum('steps')) * WEIGHTS.project) * 100)
+  return { progress, minutes: S.hours.reduce((n, h) => n + h.minutes, 0), lDone: sum('lDone'), lessons: sum('lessons'), eDone: sum('eDone'), exs: sum('exs'), projDone: all.filter((s) => s.projectDone).length, projects: all.length, pDone: sum('pDone'), streak: streak() }
+}
+const fmtH = (min) => { const h = Math.floor(min / 60), m = min % 60; return h ? (m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`) : `${m}min` }
+const fmtDate = (iso) => iso.split('-').reverse().join('/')
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+const pad2 = (n) => String(n).padStart(2, '0')
+
+/* =====================================================================
+ * 3. NAVEGAÇÃO (no app: rotas /estudos, /estudos/:trilha, /estudos/:trilha/:modulo, …)
+ * ===================================================================== */
+let R = { view: 'studies' }
+function go(route) { R = route; render(); window.scrollTo({ top: 0 }) }
+
+const NAV = [
+  { title: 'Gestão', items: [['Projetos', 'folder-kanban'], ['Tarefas', 'list-checks', 1], ['Calendário', 'calendar-days'], ['Clientes', 'users'], ['Contratos', 'file-signature']] },
+  { title: 'Conteúdo', items: [['Conteúdo', 'megaphone'], ['Arquivos', 'folder-open']] },
+  { title: 'Inteligência', items: [['Assistente', 'bot'], ['Conhecimento', 'brain'], ['Automações', 'zap']] },
+  { title: 'Financeiro', items: [['Financeiro', 'wallet'], ['Relatórios', 'bar-chart-3']] },
+  { id: 'aprendizado', title: 'Aprendizado', isNew: true, items: [['Estudos', 'graduation-cap', 0, 'studies'], ['Biblioteca', 'library', 0, 'library'], ['Projetos de estudo', 'target', 0, 'study-projects']] },
+  { title: 'Projetos ativos', projects: [['Luaria.IA', '#8b5cf6'], ['Med Resumos', '#0ea5e9']] },
+  { title: 'Sistema', items: [['Configurações', 'settings']] },
+]
+const openSections = new Set(['Aprendizado'])
+function routeRoot() { return ({ library: 'library', 'study-projects': 'study-projects' })[R.view] || 'studies' }
+
+function renderNav() {
+  const root = routeRoot()
+  const nav = document.getElementById('nav')
+  nav.innerHTML = `<button class="nav-item" data-fake><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></button><div class="divider"></div>` +
+    NAV.map((s) => {
+      const open = openSections.has(s.title)
+      const items = s.projects
+        ? s.projects.map(([n, c]) => `<button class="nav-item project" data-fake><span class="pdot" style="background:${c}"></span><span class="label">${n}</span></button>`).join('')
+        : s.items.map(([label, icon, badge, to]) => `<button class="nav-item" ${to ? `data-to="${to}"` : 'data-fake'} ${to === root ? 'aria-current="page"' : ''}><i data-lucide="${icon}"></i><span class="label">${label}</span>${badge ? `<span class="badge">${badge}</span>` : ''}</button>`).join('')
+      return `<div class="section ${open ? 'open' : ''}"><button class="sec-head" data-sec="${s.title}" aria-expanded="${open}"><span class="title">${s.title}</span>${s.isNew ? '<span class="new">novo</span>' : ''}<i data-lucide="chevron-down" class="chev"></i></button><div class="sec-panel"><div class="sec-inner">${items}</div></div></div>`
+    }).join('')
+  document.getElementById('mobile-nav').innerHTML = NAV[4].items.map(([label, icon, , to]) => `<button class="nav-item" data-to="${to}" ${to === root ? 'aria-current="page"' : ''}><i data-lucide="${icon}"></i><span class="label">${label}</span></button>`).join('')
+}
+document.addEventListener('click', (e) => {
+  const sec = e.target.closest('[data-sec]')
+  if (sec) { const t = sec.dataset.sec; openSections.has(t) ? openSections.delete(t) : openSections.add(t); renderNav(); lucide.createIcons(); return }
+  const to = e.target.closest('[data-to]')
+  if (to) return go({ view: to.dataset.to })
+  if (e.target.closest('[data-fake]')) toast('Fora do escopo do protótipo', 'info')
+})
+
+/* =====================================================================
+ * 4. COMPONENTES
+ * ===================================================================== */
+const icon = (n, s = '') => `<i data-lucide="${n}" ${s ? `style="${s}"` : ''}></i>`
+const bar = (pct) => `<div class="bar"><span style="width:${pct}%"></span></div>`
+const pill = (pct) => { const [c, l] = statusOf(pct); return `<span class="pill ${c}">${l}</span>` }
+const stat = (label, val, ic, hint = '') => `<div class="card stat"><div class="top"><span class="lbl">${label}</span><span class="ic">${icon(ic)}</span></div><div class="val tabular">${val}</div>${hint ? `<div class="hint">${hint}</div>` : ''}</div>`
+const crumbs = (list) => `<nav class="crumbs" aria-label="Breadcrumb">${list.map((c, i) => `${i ? icon('chevron-right') : ''}${c.go ? `<a data-go='${JSON.stringify(c.go)}'>${esc(c.label)}</a>` : `<span class="cur">${esc(c.label)}</span>`}`).join('')}</nav>`
+document.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); e.stopPropagation(); go(JSON.parse(g.dataset.go)) } }, true)
+const goAttr = (r) => `data-go='${JSON.stringify(r)}'`
+
+function statsGrid(s, scope) {
+  return `<div class="grid stats">
+    ${stat('Progresso geral', `${s.progress}%`, 'gauge', scope)}
+    ${stat('Horas estudadas', fmtH(s.minutes), 'clock', 'registradas')}
+    ${stat('Aulas concluídas', `${s.lDone}<span class="subtle" style="font-size:14px;font-weight:500">/${s.lessons}</span>`, 'book-open-check')}
+    ${stat('Exercícios', `${s.eDone}<span class="subtle" style="font-size:14px;font-weight:500">/${s.exs}</span>`, 'pencil-line', 'concluídos')}
+    ${stat('Projetos', s.projects != null ? `${s.projDone}<span class="subtle" style="font-size:14px;font-weight:500">/${s.projects}</span>` : `${s.pDone}<span class="subtle" style="font-size:14px;font-weight:500">/${s.steps}</span>`, 'target', s.projects != null ? 'concluídos' : 'etapas do projeto final')}
+    ${stat('Sequência atual', `${s.streak} ${s.streak === 1 ? 'dia' : 'dias'}`, 'flame', s.streak ? 'continue hoje!' : 'estude hoje para começar')}
+  </div>`
+}
+
+function hoursChart(trackId) {
+  const days = Array.from({ length: 14 }, (_, i) => daysAgo(13 - i))
+  const per = days.map((d) => S.hours.filter((h) => h.date === d && (!trackId || h.trackId === trackId)).reduce((n, h) => n + h.minutes, 0))
+  const max = Math.max(60, ...per)
+  return `<div class="chart" role="img" aria-label="Horas estudadas nos últimos 14 dias">${days.map((d, i) => `<div class="c" title="${fmtDate(d)} — ${per[i] ? fmtH(per[i]) : 'sem registro'}"><div class="b ${per[i] ? '' : 'z'}" style="height:${Math.max(2, (per[i] / max) * 120)}px"></div><span class="x">${d.slice(8)}</span></div>`).join('')}</div>`
+}
+function hoursList(trackId, limit = 6) {
+  const list = S.hours.filter((h) => !trackId || h.trackId === trackId).sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit)
+  if (!list.length) return `<div class="empty" style="padding:24px">${icon('clock')}<div>Nenhuma hora registrada ainda.</div></div>`
+  return `<div class="rows">${list.map((h) => `<div class="row" style="padding:10px 20px"><div class="main"><div class="t tabular" style="font-size:13.5px">${fmtDate(h.date)} · ${fmtH(h.minutes)} <span class="subtle" style="font-weight:400">· ${esc(trackById(h.trackId)?.title || '')}</span></div>${h.note ? `<div class="s">${esc(h.note)}</div>` : ''}</div><button class="icon-btn" data-del-hour="${h.id}" aria-label="Excluir registro">${icon('trash-2')}</button></div>`).join('')}</div>`
+}
+document.addEventListener('click', (e) => { const d = e.target.closest('[data-del-hour]'); if (d) { S.hours = S.hours.filter((h) => h.id !== d.dataset.delHour); save(); render(); toast('Registro excluído') } })
+
+/* =====================================================================
+ * 5. PÁGINAS
+ * ===================================================================== */
+function pageStudies() {
+  const o = overall()
+  const planned = STUDY_TRACKS.filter((t) => t.planned)
+  return `
+  <div class="ph"><div><h1>Estudos</h1><p class="desc">Desenvolva habilidades, pratique e transforme conhecimento em projetos reais.</p></div>
+    <div class="actions"><button class="btn secondary" ${goAttr({ view: 'library' })}>${icon('library')}Biblioteca</button><button class="btn primary" data-log-hours>${icon('plus')}Registrar horas</button></div></div>
+  ${statsGrid(o, 'Aulas 60% · Exerc. 25% · Proj. 15%')}
+
+  <h2 class="sec">Do estudo ao cliente <small>como o aprendizado vira negócio</small></h2>
+  <div class="card flow">
+    <div class="st"><div class="k">${icon('book-open')}Aprender</div><div class="v tabular">${o.lDone}</div><div class="h">aulas concluídas</div></div>
+    <div class="st"><div class="k">${icon('pencil-line')}Praticar</div><div class="v tabular">${o.eDone}</div><div class="h">exercícios feitos</div></div>
+    <div class="st link" ${goAttr({ view: 'study-projects' })}><div class="k">${icon('target')}Criar projeto</div><div class="v tabular">${o.pDone}</div><div class="h">etapas de projeto</div></div>
+    <div class="st link" ${goAttr({ view: 'study-projects' })}><div class="k">${icon('briefcase')}Portfólio</div><div class="v tabular">${o.projDone}</div><div class="h">cases prontos</div></div>
+    <div class="st link" data-fake><div class="k">${icon('user-plus')}Conseguir cliente</div><div class="v tabular">—</div><div class="h">em Clientes</div></div>
+    <div class="st link" data-fake><div class="k">${icon('folder-kanban')}Gerenciar</div><div class="v tabular">—</div><div class="h">em Projetos</div></div>
+  </div>
+
+  <h2 class="sec">Minhas trilhas <small>${ACTIVE_TRACKS.length} ativas</small></h2>
+  <div class="grid tracks">${ACTIVE_TRACKS.map(trackCard).join('')}</div>
+  <div class="planned"><span>Próximas trilhas:</span>${planned.map((t) => `<span class="chip">${icon(t.icon)}${t.title}</span>`).join('')}</div>
+
+  <div class="two" style="margin-top:32px">
+    <div class="card"><div class="card-h"><div><h3>Horas estudadas</h3><p>Últimos 14 dias · ${fmtH(S.hours.filter((h) => h.date >= daysAgo(13)).reduce((n, h) => n + h.minutes, 0))} no período</p></div></div><div class="card-b">${hoursChart()}</div></div>
+    <div class="card"><div class="card-h"><div><h3>Registros recentes</h3></div><button class="btn sm ghost" data-log-hours>${icon('plus')}Registrar</button></div>${hoursList()}</div>
+  </div>`
+}
+
+function trackCard(t) {
+  const s = trackStats(t)
+  return `<article class="card track" style="--tc:${t.color}" ${goAttr({ view: 'track', trackId: t.id })} tabindex="0" role="link" aria-label="${t.title}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><div class="ticon">${icon(t.icon)}</div>${pill(s.progress)}</div>
+    <div><h3>${t.title}</h3><p class="d">${t.description}</p></div>
+    <div class="pct">${bar(s.progress)}<b class="tabular">${s.progress}%</b></div>
+    <div class="meta"><span>${icon('layers')}${t.modules.length} módulos</span><span>${icon('book-open')}${s.lessons} aulas</span><span>${icon('clock')}${fmtH(s.minutes)}</span></div>
+    <div><button class="btn ${s.progress ? 'primary' : 'secondary'} sm" ${goAttr(nextStep(t))}>${icon(s.progress ? 'play' : 'arrow-right')}${s.progress ? 'Continuar estudando' : 'Começar trilha'}</button></div>
+  </article>`
+}
+/** Próxima aula não concluída (ou o exercício pendente do módulo) */
+function nextStep(t) {
+  for (const m of t.modules) {
+    const l = m.lessons.find((l) => !S.lessons[l.id]?.done)
+    if (l) return { view: 'lesson', trackId: t.id, moduleId: m.id, lessonId: l.id }
+    if (!S.exercises[m.exercise.id]?.done) return { view: 'exercise', trackId: t.id, moduleId: m.id }
+  }
+  return { view: 'project', trackId: t.id }
+}
+
+function pageTrack() {
+  const t = trackById(R.trackId), s = trackStats(t)
+  return `
+  ${crumbs([{ label: 'Estudos', go: { view: 'studies' } }, { label: t.title }])}
+  <div class="ph" style="--tc:${t.color}"><div style="display:flex;gap:14px;align-items:flex-start"><div class="ticon lg">${icon(t.icon)}</div><div><h1>${t.title} ${pill(s.progress)}</h1><p class="desc">${t.description}</p></div></div>
+    <div class="actions"><button class="btn secondary" data-log-hours="${t.id}">${icon('clock')}Registrar horas</button><button class="btn primary" ${goAttr(nextStep(t))}>${icon('play')}${s.progress ? 'Continuar' : 'Começar'}</button></div></div>
+  ${statsGrid(s, 'desta trilha')}
+
+  <div class="two" style="margin-top:16px">
+    <div class="card"><div class="card-h"><div><h3>Como o progresso é calculado</h3><p>Aulas valem 60%, exercícios 25% e o projeto final 15%.</p></div></div><div class="card-b weights">
+      <div class="w"><span>Aulas</span>${bar(Math.round(s.lp * 100))}<span class="p tabular">${s.lDone}/${s.lessons}</span></div>
+      <div class="w"><span>Exercícios</span>${bar(Math.round(s.ep * 100))}<span class="p tabular">${s.eDone}/${s.exs}</span></div>
+      <div class="w"><span>Projeto final</span>${bar(Math.round(s.pp * 100))}<span class="p tabular">${s.pDone}/${s.steps}</span></div>
+    </div></div>
+    <div class="card"><div class="card-h"><div><h3>Horas nesta trilha</h3><p>Últimos 14 dias</p></div></div><div class="card-b">${hoursChart(t.id)}</div></div>
+  </div>
+
+  <h2 class="sec">Módulos <small>${t.modules.length} módulos · ${s.lessons} aulas</small></h2>
+  <div class="card rows">${t.modules.map((m) => {
+    const ms = moduleStats(m)
+    return `<div class="row click" ${goAttr({ view: 'module', trackId: t.id, moduleId: m.id })}>
+      <div class="main"><div class="num">Módulo ${pad2(m.number)}</div><div class="t">${m.title}</div><div class="s">${m.description}</div></div>
+      <div class="side"><div class="mini"><span class="tabular">${ms.lDone}/${m.lessons.length} aulas · exercício ${ms.exDone ? '✓' : 'pendente'}</span>${bar(ms.pct)}</div>${pill(ms.pct)}<span class="subtle">${icon('chevron-right', 'width:16px;height:16px')}</span></div>
+    </div>`
+  }).join('')}</div>
+
+  <h2 class="sec">Projeto final</h2>
+  <div class="card row click" ${goAttr({ view: 'project', trackId: t.id })} style="border-radius:12px">
+    <div class="ticon" style="--tc:var(--accent)">${icon('target')}</div>
+    <div class="main"><div class="t">${t.project.title}</div><div class="s">${t.project.description}</div></div>
+    <div class="side"><div class="mini"><span class="tabular">${s.pDone}/${s.steps} etapas</span>${bar(Math.round(s.pp * 100))}</div><button class="btn sm secondary">Abrir projeto</button></div>
+  </div>`
+}
+
+function pageModule() {
+  const t = trackById(R.trackId), m = t.modules.find((x) => x.id === R.moduleId), ms = moduleStats(m)
+  const ex = S.exercises[m.exercise.id]
+  return `
+  ${crumbs([{ label: 'Estudos', go: { view: 'studies' } }, { label: t.title, go: { view: 'track', trackId: t.id } }, { label: `Módulo ${pad2(m.number)}` }])}
+  <div class="ph"><div><div class="num" style="margin-bottom:4px">Módulo ${pad2(m.number)}</div><h1>${m.title} ${pill(ms.pct)}</h1><p class="desc">${m.description}</p></div>
+    <div class="actions">${m.number > 1 ? `<button class="btn secondary" ${goAttr({ view: 'module', trackId: t.id, moduleId: t.modules[m.number - 2].id })}>${icon('arrow-left')}Anterior</button>` : ''}${m.number < t.modules.length ? `<button class="btn secondary" ${goAttr({ view: 'module', trackId: t.id, moduleId: t.modules[m.number].id })}>Próximo${icon('arrow-right')}</button>` : ''}</div></div>
+
+  <div class="card" style="padding:18px 20px;display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;min-width:240px"><div class="num" style="margin-bottom:6px">Objetivo do módulo</div><div style="line-height:1.6">${m.description}</div></div>
+    <div style="width:260px;max-width:100%"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span class="muted">Progresso</span><b class="tabular">${ms.pct}%</b></div>${bar(ms.pct)}<div class="subtle tabular" style="font-size:12px;margin-top:6px">${ms.lDone}/${m.lessons.length} aulas · exercício ${ms.exDone ? 'concluído' : 'pendente'}</div></div>
+  </div>
+
+  <h2 class="sec">Aulas <small>${m.lessons.length} aulas</small></h2>
+  <div class="card rows">${m.lessons.map((l, i) => {
+    const done = S.lessons[l.id]?.done
+    return `<div class="row click" ${goAttr({ view: 'lesson', trackId: t.id, moduleId: m.id, lessonId: l.id })}>
+      <span class="check ${done ? 'on' : ''}">${icon('check')}</span>
+      <div class="main"><div class="t">${i + 1}. ${l.title}</div><div class="s">${l.objective || '<span class="subtle">Conteúdo em desenvolvimento</span>'}</div></div>
+      <div class="side">${l.content ? '<span class="pill soft">Conteúdo completo</span>' : ''}<span class="subtle">${icon('chevron-right', 'width:16px;height:16px')}</span></div></div>`
+  }).join('')}</div>
+
+  <h2 class="sec">Exercício do módulo</h2>
+  <div class="card row click" style="border-radius:12px" ${goAttr({ view: 'exercise', trackId: t.id, moduleId: m.id })}>
+    <span class="check ${ex?.done ? 'on' : ''}">${icon('check')}</span>
+    <div class="main"><div class="t">${m.exercise.title}</div><div class="s">${m.exercise.instructions}</div></div>
+    <div class="side">${ex?.answer && !ex.done ? '<span class="pill ip">Rascunho salvo</span>' : ''}<button class="btn sm ${ex?.done ? 'secondary' : 'primary'}">${ex?.done ? 'Revisar' : 'Fazer exercício'}</button></div>
+  </div>`
+}
+
+function pageLesson() {
+  const t = trackById(R.trackId), m = t.modules.find((x) => x.id === R.moduleId), l = m.lessons.find((x) => x.id === R.lessonId)
+  const st = S.lessons[l.id] || {}
+  const idx = m.lessons.indexOf(l)
+  const tbd = '<p class="tbd">Conteúdo desta aula será desenvolvido em breve.</p>'
+  const checklist = l.checklist || ['Li o conteúdo da aula', 'Entendi os conceitos principais', 'Fiz a aplicação prática', 'Respondi o exercício']
+  const blocks = [
+    ['Objetivo', l.objective ? `<p>${l.objective}</p>` : tbd],
+    ['Conteúdo', l.content ? l.content.map((p) => `<p>${p}</p>`).join('') : tbd],
+    ['Conceitos principais', l.concepts ? `<ul>${l.concepts.map((c) => `<li>${c}</li>`).join('')}</ul>` : tbd],
+    ['Exemplo', l.example ? `<div class="callout">${l.example}</div>` : tbd],
+    ['Aplicação prática', l.practice ? `<p>${l.practice}</p>` : tbd],
+    ['Exercício', `${l.exercise ? `<p>${l.exercise}</p>` : '<p class="tbd">Responda com suas palavras o que aprendeu nesta aula.</p>'}<textarea data-autosave="lesson-answer" placeholder="Sua resposta…" style="margin-top:8px">${esc(st.answer)}</textarea>`],
+    ['Checklist', `<div class="checklist">${checklist.map((c, i) => { const on = (st.checks || []).includes(i); return `<label class="${on ? 'on' : ''}"><input type="checkbox" data-lcheck="${i}" ${on ? 'checked' : ''}><span>${c}</span></label>` }).join('')}</div>`],
+    ['Anotações', `<textarea data-autosave="lesson-notes" placeholder="Suas anotações sobre esta aula…">${esc(st.notes)}</textarea>`],
+  ]
+  return `
+  ${crumbs([{ label: 'Estudos', go: { view: 'studies' } }, { label: t.title, go: { view: 'track', trackId: t.id } }, { label: `Módulo ${pad2(m.number)}`, go: { view: 'module', trackId: t.id, moduleId: m.id } }, { label: `Aula ${idx + 1}` }])}
+  <div class="ph"><div><div class="num" style="margin-bottom:4px">Módulo ${pad2(m.number)} · Aula ${idx + 1} de ${m.lessons.length}</div><h1>${l.title}</h1></div>
+    <div class="actions"><span class="saved" id="saved"></span></div></div>
+  <div class="lesson">
+    <div class="card">${blocks.map(([h, b], i) => `<section class="block"><h4><span class="n">${i + 2}</span>${h}</h4>${b}</section>`).join('')}
+      <section class="block" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="muted" style="font-size:13px">${st.done ? `Concluída em ${fmtDate(st.doneAt)}` : 'Terminou? Marque a aula como concluída.'}</span>
+        <button class="btn ${st.done ? 'done' : 'primary'}" data-complete-lesson>${icon(st.done ? 'check-circle-2' : 'check')}${st.done ? 'Aula concluída' : 'Concluir aula'}</button>
+      </section>
+    </div>
+    <aside class="toc">
+      <div class="card" style="padding:8px">
+        <div class="num" style="padding:8px 12px 6px">Aulas do módulo</div>
+        ${m.lessons.map((x, i) => `<button class="lnk ${x.id === l.id ? 'cur' : ''}" ${goAttr({ view: 'lesson', trackId: t.id, moduleId: m.id, lessonId: x.id })}><span class="check ${S.lessons[x.id]?.done ? 'on' : ''}">${icon('check')}</span>${i + 1}. ${x.title}</button>`).join('')}
+        <button class="lnk" ${goAttr({ view: 'exercise', trackId: t.id, moduleId: m.id })}><span class="check ${S.exercises[m.exercise.id]?.done ? 'on' : ''}">${icon('check')}</span>Exercício: ${m.exercise.title}</button>
+      </div>
+      <button class="btn secondary" data-log-hours="${t.id}" style="justify-content:center">${icon('clock')}Registrar horas</button>
+    </aside>
+  </div>`
+}
+
+function pageExercise() {
+  const t = trackById(R.trackId), m = t.modules.find((x) => x.id === R.moduleId), e = m.exercise
+  const st = S.exercises[e.id] || {}
+  return `
+  ${crumbs([{ label: 'Estudos', go: { view: 'studies' } }, { label: t.title, go: { view: 'track', trackId: t.id } }, { label: `Módulo ${pad2(m.number)}`, go: { view: 'module', trackId: t.id, moduleId: m.id } }, { label: 'Exercício' }])}
+  <div class="ph"><div><div class="num" style="margin-bottom:4px">Exercício do módulo ${pad2(m.number)}</div><h1>${e.title} ${st.done ? '<span class="pill dn">Concluído</span>' : st.answer ? '<span class="pill ip">Em andamento</span>' : ''}</h1></div>
+    <div class="actions"><span class="saved" id="saved">${st.savedAt ? `${icon('check')}Salvo às ${st.savedAt}` : ''}</span></div></div>
+  <div class="lesson">
+    <div class="card">
+      <section class="block"><h4>Instruções</h4><p>${e.instructions}</p></section>
+      <section class="block">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px"><h4 style="margin:0">Sua resposta</h4>${e.template ? `<button class="btn sm ghost" data-template>${icon('file-plus-2')}Inserir modelo</button>` : ''}</div>
+        <textarea class="tall" data-autosave="exercise-answer" placeholder="Escreva sua resposta. Tudo é salvo automaticamente.">${esc(st.answer)}</textarea>
+      </section>
+      <section class="block" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="muted" style="font-size:13px">${st.done ? `Concluído em ${fmtDate(st.doneAt)}` : 'Salvo automaticamente enquanto você escreve.'}</span>
+        <button class="btn ${st.done ? 'done' : 'primary'}" data-complete-exercise>${icon(st.done ? 'check-circle-2' : 'check')}${st.done ? 'Exercício concluído' : 'Marcar como concluído'}</button>
+      </section>
+    </div>
+    <aside class="toc"><div class="card" style="padding:14px 12px">
+      <div class="num" style="padding:0 8px 8px">Checklist</div>
+      <div class="checklist">${(e.checklist || []).map((c, i) => { const on = (st.checks || []).includes(i); return `<label class="${on ? 'on' : ''}"><input type="checkbox" data-echeck="${i}" ${on ? 'checked' : ''}><span>${c}</span></label>` }).join('')}</div>
+    </div>
+    <button class="btn secondary" data-save-lib style="justify-content:center">${icon('library')}Salvar resposta na Biblioteca</button></aside>
+  </div>`
+}
+
+function pageProject() {
+  const t = trackById(R.trackId), p = t.project, st = S.projects[p.id] || { steps: {} }
+  const done = Object.values(st.steps).filter(Boolean).length, pct = Math.round((done / p.steps.length) * 100)
+  return `
+  ${crumbs([{ label: 'Estudos', go: { view: 'studies' } }, { label: t.title, go: { view: 'track', trackId: t.id } }, { label: 'Projeto final' }])}
+  <div class="ph"><div><div class="num" style="margin-bottom:4px">${t.title} · Projeto final</div><h1>${p.title.replace(/^Projeto Final — /, '')} ${pill(pct)}</h1><p class="desc">${p.description}</p></div></div>
+  <div class="card" style="padding:18px 20px;margin-bottom:16px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span class="muted">${done} de ${p.steps.length} etapas concluídas</span><b class="tabular">${pct}%</b></div>${bar(pct)}</div>
+  <div class="card rows">${p.steps.map((s, i) => {
+    const on = !!st.steps[i]
+    return `<div class="row"><button class="check ${on ? 'on' : ''}" data-step="${i}" aria-pressed="${on}" aria-label="Marcar etapa ${i + 1}">${icon('check')}</button>
+      <div class="main"><div class="t" style="${on ? 'color:var(--subtle);text-decoration:line-through' : ''}"><span class="subtle tabular" style="font-weight:500">${pad2(i + 1)}</span>&nbsp; ${s}</div></div>
+      ${i === p.steps.length - 1 ? `<span class="pill soft">${icon('briefcase', 'width:12px;height:12px')}vira case no portfólio</span>` : ''}</div>`
+  }).join('')}</div>
+  ${pct === 100 ? `<div class="card" style="margin-top:16px;padding:18px 20px;display:flex;gap:14px;align-items:center;border-color:color-mix(in srgb,var(--ok) 40%,var(--line))"><div class="ticon" style="--tc:var(--ok)">${icon('trophy')}</div><div class="main" style="flex:1"><div class="t">Projeto concluído!</div><div class="s">No app, este case poderá ser enviado para a Biblioteca e usado nas propostas para clientes.</div></div></div>` : ''}`
+}
+
+function pageStudyProjects() {
+  return `
+  <div class="ph"><div><h1>Projetos de estudo</h1><p class="desc">Projetos práticos das trilhas — cada um termina como um case para o seu portfólio.</p></div></div>
+  <div class="card rows">${ACTIVE_TRACKS.map((t) => {
+    const s = trackStats(t)
+    return `<div class="row click" style="--tc:${t.color}" ${goAttr({ view: 'project', trackId: t.id })}><div class="ticon">${icon(t.icon)}</div>
+      <div class="main"><div class="t">${t.project.title.replace(/^Projeto Final — /, '')}</div><div class="s">${t.title}</div></div>
+      <div class="side"><div class="mini"><span class="tabular">${s.pDone}/${s.steps} etapas</span>${bar(Math.round(s.pp * 100))}</div>${pill(Math.round(s.pp * 100))}</div></div>`
+  }).join('')}</div>
+  <p class="subtle" style="font-size:13px;margin-top:12px">Em breve: projetos livres (fora das trilhas) e ligação com Clientes e Projetos do Business OS.</p>`
+}
+
+let LIB = { q: '', type: '', track: '' }
+function pageLibrary() {
+  const q = LIB.q.trim().toLowerCase()
+  const list = S.library.filter((i) => (!LIB.type || i.type === LIB.type) && (!LIB.track || (LIB.track === 'geral' ? !i.trackId : i.trackId === LIB.track)) && (!q || [i.title, i.content, i.tags, i.url].join(' ').toLowerCase().includes(q)))
+  return `
+  <div class="ph"><div><h1>Biblioteca</h1><p class="desc">Prompts, templates, referências e materiais — disponíveis para todas as trilhas.</p></div>
+    <div class="actions"><button class="btn primary" data-lib-new>${icon('plus')}Novo item</button></div></div>
+  <div class="toolbar">
+    <div class="grow">${icon('search')}<input type="search" id="lib-q" placeholder="Pesquisar na biblioteca…" value="${esc(LIB.q)}"></div>
+    <select id="lib-track" aria-label="Filtrar por trilha"><option value="">Todas as trilhas</option><option value="geral" ${LIB.track === 'geral' ? 'selected' : ''}>Geral (sem trilha)</option>${ACTIVE_TRACKS.map((t) => `<option value="${t.id}" ${LIB.track === t.id ? 'selected' : ''}>${t.title}</option>`).join('')}</select>
+  </div>
+  <div class="seg" role="group" aria-label="Filtrar por tipo" style="margin-bottom:16px"><button data-lib-type="" aria-pressed="${!LIB.type}">Todos</button>${LIB_TYPES.map((t) => `<button data-lib-type="${t.id}" aria-pressed="${LIB.type === t.id}">${t.label}</button>`).join('')}</div>
+  ${list.length ? `<div class="grid lib">${list.map((i) => {
+    const ty = libType(i.type), tr = trackById(i.trackId)
+    return `<article class="card li"><div class="hd"><span class="ty">${icon(ty.icon)}${ty.one}</span><span style="flex:1"></span>${tr ? `<span class="pill soft">${tr.title}</span>` : ''}</div>
+      <h3>${esc(i.title)}</h3><div class="body">${esc(i.content || i.url)}</div>
+      <div class="ft"><div class="sp">${(i.tags || '').split(',').map((x) => x.trim()).filter(Boolean).map((x) => `<span class="subtle" style="font-size:12px">#${esc(x)}</span>`).join('')}</div>
+        ${i.url ? `<a class="icon-btn" href="${esc(i.url)}" target="_blank" rel="noopener noreferrer" title="Abrir link" aria-label="Abrir link">${icon('external-link')}</a>` : ''}
+        <button class="icon-btn" data-lib-copy="${i.id}" title="Copiar" aria-label="Copiar">${icon('copy')}</button>
+        <button class="icon-btn" data-lib-edit="${i.id}" title="Editar" aria-label="Editar">${icon('pencil')}</button>
+        <button class="icon-btn" data-lib-del="${i.id}" title="Excluir" aria-label="Excluir">${icon('trash-2')}</button></div></article>`
+  }).join('')}</div>` : `<div class="card empty">${icon('library')}<div>${S.library.length ? 'Nada encontrado com esses filtros.' : 'Sua biblioteca está vazia. Adicione o primeiro item.'}</div></div>`}`
+}
+
+/* =====================================================================
+ * 6. INTERAÇÕES
+ * ===================================================================== */
+let saveTimer
+document.addEventListener('input', (e) => {
+  const el = e.target
+  if (el.id === 'lib-q') { LIB.q = el.value; const pos = el.selectionStart; render(); const n = document.getElementById('lib-q'); n.focus(); n.setSelectionRange(pos, pos); return }
+  const kind = el.dataset.autosave
+  if (!kind) return
+  const saved = document.getElementById('saved')
+  if (saved) saved.innerHTML = 'Salvando…'
+  clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => {
+    const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    if (kind.startsWith('lesson')) { const st = (S.lessons[R.lessonId] ||= {}); st[kind === 'lesson-notes' ? 'notes' : 'answer'] = el.value }
+    else { const st = (S.exercises[R.moduleId + '.ex'] ||= {}); st.answer = el.value; st.savedAt = time }
+    save()
+    if (saved) { saved.innerHTML = `${icon('check')}Salvo às ${time}`; lucide.createIcons() }
+  }, 500)
+})
+document.addEventListener('change', (e) => {
+  const el = e.target
+  if (el.id === 'lib-track') { LIB.track = el.value; return render() }
+  const toggleIn = (arr, i, on) => (on ? [...new Set([...(arr || []), i])] : (arr || []).filter((x) => x !== i))
+  if (el.dataset.lcheck != null) { const st = (S.lessons[R.lessonId] ||= {}); st.checks = toggleIn(st.checks, +el.dataset.lcheck, el.checked); save(); el.closest('label').classList.toggle('on', el.checked) }
+  if (el.dataset.echeck != null) { const st = (S.exercises[R.moduleId + '.ex'] ||= {}); st.checks = toggleIn(st.checks, +el.dataset.echeck, el.checked); save(); el.closest('label').classList.toggle('on', el.checked) }
+})
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('button, [role=link]')
+  if (!el) return
+  if (el.hasAttribute('data-complete-lesson')) {
+    const st = (S.lessons[R.lessonId] ||= {}); st.done = !st.done; st.doneAt = st.done ? today() : null; save()
+    if (st.done) {
+      toast('Aula concluída! Progresso atualizado.')
+      const t = trackById(R.trackId), m = t.modules.find((x) => x.id === R.moduleId), i = m.lessons.findIndex((l) => l.id === R.lessonId)
+      return go(m.lessons[i + 1] ? { ...R, lessonId: m.lessons[i + 1].id } : { view: 'exercise', trackId: t.id, moduleId: m.id })
+    }
+    return render()
+  }
+  if (el.hasAttribute('data-complete-exercise')) { const st = (S.exercises[R.moduleId + '.ex'] ||= {}); st.done = !st.done; st.doneAt = st.done ? today() : null; save(); render(); if (st.done) toast('Exercício concluído!') }
+  if (el.hasAttribute('data-template')) {
+    const t = trackById(R.trackId), m = t.modules.find((x) => x.id === R.moduleId), ta = document.querySelector('[data-autosave="exercise-answer"]')
+    ta.value = ta.value.trim() ? `${ta.value.trimEnd()}\n\n${m.exercise.template}` : m.exercise.template
+    ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); toast('Modelo inserido')
+  }
+  if (el.hasAttribute('data-save-lib')) {
+    const t = trackById(R.trackId), m = t.modules.find((x) => x.id === R.moduleId)
+    const answer = S.exercises[m.exercise.id]?.answer
+    if (!answer?.trim()) return toast('Escreva a resposta primeiro', 'info')
+    S.library.unshift({ id: uid(), type: 'material', title: `Exercício — ${m.exercise.title}`, trackId: t.id, url: '', tags: 'exercício', content: answer }); save(); toast('Salvo na Biblioteca')
+  }
+  if (el.dataset.step != null) { const p = trackById(R.trackId).project.id; const st = (S.projects[p] ||= { steps: {} }); st.steps[el.dataset.step] = !st.steps[el.dataset.step]; save(); render() }
+  if (el.hasAttribute('data-log-hours')) hoursModal(el.dataset.logHours || R.trackId)
+  if (el.dataset.libType != null) { LIB.type = el.dataset.libType; render() }
+  if (el.hasAttribute('data-lib-new')) libModal()
+  if (el.dataset.libEdit) libModal(S.library.find((i) => i.id === el.dataset.libEdit))
+  if (el.dataset.libDel) { if (confirm('Excluir este item da Biblioteca?')) { S.library = S.library.filter((i) => i.id !== el.dataset.libDel); save(); render(); toast('Item excluído') } }
+  if (el.dataset.libCopy) { const i = S.library.find((x) => x.id === el.dataset.libCopy); copy(i.content || i.url) }
+})
+document.addEventListener('keydown', (e) => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=link][data-go]')) { e.preventDefault(); go(JSON.parse(e.target.dataset.go)) }
+  if (e.key === 'Escape') closeModal()
+})
+
+function copy(text) {
+  const done = () => toast('Copiado para a área de transferência')
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done, fallback)
+  else fallback()
+  function fallback() { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done() } catch { toast('Não foi possível copiar', 'info') } ta.remove() }
+}
+
+/* Modais */
+function modal(title, body, onSubmit) {
+  document.getElementById('modal-root').innerHTML = `<div class="overlay" data-overlay><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="mh"><h3 id="mt">${title}</h3><button class="icon-btn" data-close aria-label="Fechar">${icon('x')}</button></div><form novalidate>${body}<div class="mf"><button type="button" class="btn secondary" data-close>Cancelar</button><button class="btn primary" type="submit">Salvar</button></div></form></div></div>`
+  lucide.createIcons()
+  const root = document.getElementById('modal-root')
+  root.querySelector('form').onsubmit = (e) => { e.preventDefault(); if (onSubmit(new FormData(e.target)) !== false) closeModal() }
+  root.querySelector('[data-overlay]').addEventListener('mousedown', (e) => { if (e.target.matches('[data-overlay]')) closeModal() })
+  root.querySelectorAll('[data-close]').forEach((b) => (b.onclick = closeModal))
+  root.querySelector('input, select, textarea')?.focus()
+}
+function closeModal() { document.getElementById('modal-root').innerHTML = '' }
+
+function hoursModal(trackId) {
+  modal('Registrar horas de estudo', `
+    <div class="field-row"><label class="field"><span>Data</span><input type="date" name="date" value="${today()}" max="${today()}" required></label>
+    <label class="field"><span>Tempo</span><div style="display:flex;gap:8px"><input type="number" name="h" min="0" max="16" value="1" aria-label="Horas" style="width:50%"><select name="m" aria-label="Minutos" style="width:50%">${[0, 15, 30, 45].map((m) => `<option value="${m}" ${m === 30 ? 'selected' : ''}>${m} min</option>`).join('')}</select></div></label></div>
+    <label class="field"><span>Trilha</span><select name="track">${ACTIVE_TRACKS.map((t) => `<option value="${t.id}" ${t.id === trackId ? 'selected' : ''}>${t.title}</option>`).join('')}</select></label>
+    <label class="field"><span>Observação <span class="subtle" style="font-weight:400">(opcional)</span></span><input type="text" name="note" maxlength="200" placeholder="Ex.: Estudei planejamento de conteúdo."></label>`, (f) => {
+    const minutes = (+f.get('h') || 0) * 60 + (+f.get('m') || 0)
+    if (!minutes) { toast('Informe o tempo estudado', 'info'); return false }
+    S.hours.push({ id: uid(), date: f.get('date') || today(), minutes, trackId: f.get('track'), note: String(f.get('note') || '').trim() }); save(); render(); toast(`${fmtH(minutes)} registradas`)
+  })
+}
+function libModal(item) {
+  const i = item || { type: 'prompt', title: '', trackId: R.trackId || '', url: '', tags: '', content: '' }
+  modal(item ? 'Editar item' : 'Novo item na Biblioteca', `
+    <div class="field-row"><label class="field"><span>Tipo</span><select name="type">${LIB_TYPES.map((t) => `<option value="${t.id}" ${t.id === i.type ? 'selected' : ''}>${t.one}</option>`).join('')}</select></label>
+    <label class="field"><span>Trilha</span><select name="trackId"><option value="">Geral (todas)</option>${ACTIVE_TRACKS.map((t) => `<option value="${t.id}" ${t.id === i.trackId ? 'selected' : ''}>${t.title}</option>`).join('')}</select></label></div>
+    <label class="field"><span>Título</span><input type="text" name="title" maxlength="140" value="${esc(i.title)}" required></label>
+    <label class="field"><span>Link <span class="subtle" style="font-weight:400">(opcional)</span></span><input type="url" name="url" placeholder="https://" value="${esc(i.url)}"></label>
+    <label class="field"><span>Conteúdo</span><textarea name="content" placeholder="Texto do prompt, template, anotações…">${esc(i.content)}</textarea></label>
+    <label class="field"><span>Tags <span class="subtle" style="font-weight:400">(separadas por vírgula)</span></span><input type="text" name="tags" value="${esc(i.tags)}"></label>`, (f) => {
+    const title = String(f.get('title') || '').trim()
+    if (!title) { toast('Dê um título ao item', 'info'); return false }
+    const url = String(f.get('url') || '').trim()
+    if (url && !/^https?:\/\//i.test(url)) { toast('O link deve começar com http:// ou https://', 'info'); return false }
+    const data = { type: f.get('type'), trackId: f.get('trackId'), title, url, content: String(f.get('content') || ''), tags: String(f.get('tags') || '') }
+    if (item) Object.assign(item, data); else S.library.unshift({ id: uid(), ...data })
+    save(); render(); toast(item ? 'Item atualizado' : 'Item adicionado')
+  })
+}
+
+let toastTimer
+function toast(msg, kind) {
+  document.querySelector('.toast')?.remove()
+  const el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status')
+  el.innerHTML = `${icon(kind === 'info' ? 'info' : 'check')}${esc(msg)}`
+  document.body.appendChild(el); lucide.createIcons()
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.remove(), 2200)
+}
+
+/* =====================================================================
+ * 7. RENDER
+ * ===================================================================== */
+const PAGES = { studies: pageStudies, track: pageTrack, module: pageModule, lesson: pageLesson, exercise: pageExercise, project: pageProject, library: pageLibrary, 'study-projects': pageStudyProjects }
+function render() {
+  renderNav()
+  document.getElementById('page').innerHTML = PAGES[R.view]()
+  lucide.createIcons()
+}
+
+document.getElementById('theme').onclick = () => document.documentElement.classList.toggle('dark')
+document.getElementById('reset').onclick = () => { if (confirm('Limpar todo o progresso e a biblioteca do protótipo?')) { S = emptyState(); save(); go({ view: 'studies' }); toast('Dados limpos') } }
+document.getElementById('seed').onclick = () => { S = demoState(); save(); go({ view: 'studies' }); toast('Dados de exemplo carregados') }
+if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark')
+render()
+</script>
+</body>
+</html>

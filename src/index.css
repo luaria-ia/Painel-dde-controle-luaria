@@ -1,0 +1,188 @@
+@import 'tailwindcss';
+
+/* Dark mode por classe (.dark no <html>), controlado pela preferência do usuário. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Tokens semânticos. Componentes usam bg-surface, text-fg, border-line etc.
+ * Trocar a identidade visual = alterar só estas variáveis.
+ */
+:root {
+  --bg: #f6f5f1;
+  --surface: #ffffff;
+  --surface-2: #f1f0ec;
+  --line: #e6e4de;
+  --line-strong: #d6d3cb;
+  --fg: #1b1c19;
+  --muted: #5f625b;
+  --subtle: #8d8f88;
+  --accent: #1f5f55;
+  --accent-hover: #184c44;
+  --accent-fg: #f7f5ef;
+  --accent-soft: #1f5f5514;
+  --ring: #1f5f5566;
+  --shadow: 0 1px 2px rgb(20 22 18 / 0.04), 0 1px 1px rgb(20 22 18 / 0.03);
+  --shadow-lg: 0 12px 32px -8px rgb(20 22 18 / 0.18), 0 2px 6px rgb(20 22 18 / 0.06);
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0e100f;
+  --surface: #151816;
+  --surface-2: #1b1f1d;
+  --line: #252a27;
+  --line-strong: #323834;
+  --fg: #ebece8;
+  --muted: #a3a7a0;
+  --subtle: #747971;
+  --accent: #5cbfae;
+  --accent-hover: #74ccbd;
+  --accent-fg: #0b1412;
+  --accent-soft: #5cbfae1c;
+  --ring: #5cbfae55;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 16px 40px -8px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-ring: var(--ring);
+  --shadow-card: var(--shadow);
+  --shadow-pop: var(--shadow-lg);
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-bg text-fg font-sans antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  ::selection {
+    background: var(--accent-soft);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  /* Inputs de data seguem o tema */
+  input[type='date']::-webkit-calendar-picker-indicator {
+    opacity: 0.55;
+    cursor: pointer;
+  }
+  .dark input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+@keyframes fade-in {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98) }
+  to { opacity: 1; transform: none }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(100%) }
+  to { opacity: 1; transform: none }
+}
+@utility animate-fade-in {
+  animation: fade-in 0.15s ease-out;
+}
+@utility animate-pop-in {
+  animation: pop-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@utility animate-slide-up {
+  animation: slide-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Animações dos Robôs da Empresa Digital Viva */
+@keyframes robot-breathe {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-2.5px); }
+}
+@keyframes robot-scan {
+  0%, 100% { transform: translateX(0px); }
+  30% { transform: translateX(-1.8px); }
+  70% { transform: translateX(1.8px); }
+}
+@keyframes typing-flicker {
+  0%, 100% { opacity: 0.2; transform: scale(0.85); }
+  35% { opacity: 0.95; transform: scale(1.15); }
+  65% { opacity: 0.4; transform: scale(0.95); }
+}
+@keyframes screen-flicker {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.85; }
+}
+@keyframes ring-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes ring-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+}
+@keyframes data-flow {
+  0% { transform: translateX(-100%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+@keyframes floating-bubble {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3.5px); }
+}
+
+@utility animate-robot-breathe {
+  animation: robot-breathe 2.8s ease-in-out infinite;
+}
+@utility animate-robot-scan {
+  animation: robot-scan 3.2s ease-in-out infinite;
+}
+@utility animate-typing-flicker {
+  animation: typing-flicker 1.2s ease-in-out infinite;
+}
+@utility animate-screen-flicker {
+  animation: screen-flicker 2.4s ease-in-out infinite;
+}
+@utility animate-ring-spin {
+  animation: ring-spin 14s linear infinite;
+}
+@utility animate-ring-pulse {
+  animation: ring-pulse 3s ease-in-out infinite;
+}
+@utility animate-floating-bubble {
+  animation: floating-bubble 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
