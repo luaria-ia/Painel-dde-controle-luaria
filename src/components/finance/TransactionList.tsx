@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowDownRight, ArrowUpRight, Pencil, Receipt, Trash2 } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Pencil, Receipt, RefreshCw, Trash2 } from 'lucide-react'
 import { ClientLink, ProjectLink } from '@/components/common/EntityLinks'
 import { Badge, DemoBadge } from '@/components/ui/Badge'
 import { useConfirm } from '@/components/ui/confirmContext'
@@ -8,11 +8,25 @@ import { Menu } from '@/components/ui/Menu'
 import { TBody, THead, Table, Td, Th, Tr } from '@/components/ui/Table'
 import { useToast } from '@/components/ui/toastContext'
 import { EXPENSE_STATUS, INCOME_STATUS } from '@/config/labels'
-import { formatCurrency, formatDate, formatDateShort } from '@/lib/format'
+import { formatCurrency, formatDate, formatDateShort, toISODate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useData } from '@/store/useData'
 import type { ExpenseStatus, IncomeStatus, Transaction } from '@/types'
 import { TransactionFormModal } from './TransactionFormModal'
+
+export function RecurrenceBadge({ t }: { t: Transaction }) {
+  const isRec = Boolean(t.recurring || t.recurrencePeriod === 'mensal' || t.category?.toLowerCase() === 'mensalidade')
+  if (!isRec) return null
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-500/20 dark:text-violet-300"
+      title={t.recurringDay ? `Cobrança recorrente todo dia ${t.recurringDay}` : 'Recorrente mensal'}
+    >
+      <RefreshCw className="h-2.5 w-2.5" />
+      Mensal {t.recurringDay ? `· dia ${t.recurringDay}` : ''}
+    </span>
+  )
+}
 
 export function TransactionStatusBadge({ t }: { t: Transaction }) {
   const s = t.type === 'receita' ? INCOME_STATUS[t.status as IncomeStatus] : EXPENSE_STATUS[t.status as ExpenseStatus]
@@ -54,7 +68,7 @@ interface Props {
 
 /** Lista de lançamentos (receitas e/ou despesas) com edição/exclusão embutidas. */
 export function TransactionList({ transactions, showProject = true, showClient = true, emptyTitle, emptyAction }: Props) {
-  const { deleteTransaction } = useData()
+  const { deleteTransaction, createTransaction } = useData()
   const confirm = useConfirm()
   const toast = useToast()
   const [editing, setEditing] = useState<Transaction | null>(null)
@@ -68,10 +82,37 @@ export function TransactionList({ transactions, showProject = true, showClient =
     if (ok && (await deleteTransaction(t.id))) toast.success('Lançamento excluído')
   }
 
+  const duplicateNextMonth = async (t: Transaction) => {
+    const parts = t.date.split('-').map(Number)
+    const year = parts[0]
+    const month = parts[1] // 1-indexed
+    const day = t.recurringDay || parts[2]
+    const nextDate = new Date(year, month, day)
+    const nextISO = toISODate(nextDate)
+    const isIncome = t.type === 'receita'
+    await createTransaction({
+      type: t.type,
+      description: t.description,
+      amountCents: t.amountCents,
+      date: nextISO,
+      category: t.category,
+      projectId: t.projectId,
+      clientId: t.clientId,
+      status: isIncome ? 'pendente' : 'a_pagar',
+      recurring: true,
+      recurrencePeriod: 'mensal',
+      recurringDay: day,
+    })
+    toast.success(`Mensalidade gerada para ${formatDate(nextISO)}`)
+  }
+
+  const isRec = (t: Transaction) => Boolean(t.recurring || t.recurrencePeriod === 'mensal' || t.category?.toLowerCase() === 'mensalidade')
+
   const menu = (t: Transaction) => (
     <Menu
       items={[
         { label: 'Editar', icon: Pencil, onSelect: () => setEditing(t) },
+        ...(isRec(t) ? [{ label: 'Gerar próximo mês', icon: RefreshCw, onSelect: () => duplicateNextMonth(t) }] : []),
         { label: 'Excluir', icon: Trash2, danger: true, onSelect: () => remove(t) },
       ]}
     />
@@ -97,9 +138,10 @@ export function TransactionList({ transactions, showProject = true, showClient =
             {transactions.map((t) => (
               <Tr key={t.id} className="cursor-pointer" onClick={() => setEditing(t)}>
                 <Td>
-                  <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <TypeIcon t={t} />
                     <span className="truncate font-medium" title={t.description}>{t.description}</span>
+                    <RecurrenceBadge t={t} />
                     {t.isDemo && <DemoBadge />}
                   </div>
                 </Td>
@@ -133,7 +175,10 @@ export function TransactionList({ transactions, showProject = true, showClient =
           <li key={t.id} className="flex cursor-pointer items-center gap-3 px-4 py-3" onClick={() => setEditing(t)}>
             <TypeIcon t={t} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{t.description}</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-medium">{t.description}</p>
+                <RecurrenceBadge t={t} />
+              </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-subtle">
                 <span>{formatDateShort(t.date)}</span>
                 <span>·</span>

@@ -41,6 +41,9 @@ export interface FinanceSummary {
   aReceberCents: number // pendente + atrasado
   atrasadoCents: number
   aPagarCents: number
+  mrrCents: number // Receita Recorrente Mensal (mensalidades de clientes)
+  despesasRecorrentesCents: number // Despesas recorrentes mensais (ferramentas, servidores)
+  margemRecorrenteCents: number // Margem líquida recorrente
 }
 
 const sum = (list: Transaction[]) => list.reduce((acc, t) => acc + t.amountCents, 0)
@@ -50,6 +53,12 @@ export function financeSummary(transactions: Transaction[]): FinanceSummary {
   const despesas = transactions.filter((t) => t.type === 'despesa')
   const receitaCents = sum(receitas.filter((t) => t.status === 'recebido'))
   const despesaCents = sum(despesas.filter((t) => t.status === 'pago'))
+  const mrrCents = sum(
+    receitas.filter((t) => Boolean(t.recurring || t.recurrencePeriod === 'mensal' || t.category?.toLowerCase() === 'mensalidade')),
+  )
+  const despesasRecorrentesCents = sum(
+    despesas.filter((t) => Boolean(t.recurring || t.recurrencePeriod === 'mensal')),
+  )
   return {
     receitaCents,
     despesaCents,
@@ -57,6 +66,9 @@ export function financeSummary(transactions: Transaction[]): FinanceSummary {
     aReceberCents: sum(receitas.filter((t) => t.status === 'pendente' || t.status === 'atrasado')),
     atrasadoCents: sum(receitas.filter((t) => t.status === 'atrasado')),
     aPagarCents: sum(despesas.filter((t) => t.status === 'a_pagar')),
+    mrrCents,
+    despesasRecorrentesCents,
+    margemRecorrenteCents: mrrCents - despesasRecorrentesCents,
   }
 }
 

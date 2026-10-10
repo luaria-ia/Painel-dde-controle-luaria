@@ -32,10 +32,49 @@ export type { Repository } from './createSupabaseRepository'
 
 export const projectRepository = createSupabaseRepository<Project>({ table: 'projects' })
 export const taskRepository = createSupabaseRepository<Task>({ table: 'tasks' })
-export const transactionRepository = createSupabaseRepository<Transaction>({
+const baseTransactionRepo = createSupabaseRepository<Transaction>({
   table: 'transactions',
   order: { column: 'date', ascending: false },
+  virtualFields: ['recurring', 'recurrencePeriod', 'recurringDay'],
+  map: (row) => {
+    const t = fromRow<Transaction>(row)
+    const desc = t.description || ''
+    const isTag = /\[recorrente\]/i.test(desc)
+    const isCategoryMonthly = t.category?.toLowerCase() === 'mensalidade'
+    const isRec = Boolean(
+      (row as Record<string, unknown>).recurring ||
+      (row as Record<string, unknown>).recurrence_period === 'mensal' ||
+      isTag ||
+      isCategoryMonthly
+    )
+    const day = (row as Record<string, unknown>).recurring_day as number | undefined
+    return {
+      ...t,
+      description: desc.replace(/\s*\[recorrente\]\s*/gi, '').trim(),
+      recurring: isRec,
+      recurrencePeriod: isRec ? 'mensal' : 'nenhuma',
+      recurringDay: day ?? (t.date ? parseInt(t.date.split('-')[2], 10) : null),
+    }
+  },
 })
+
+function formatTxPayload<T extends Partial<Transaction>>(input: T): T {
+  const isRec = Boolean(input.recurring || input.recurrencePeriod === 'mensal' || input.category?.toLowerCase() === 'mensalidade')
+  if (input.description !== undefined) {
+    let clean = input.description.replace(/\s*\[recorrente\]\s*/gi, '').trim()
+    if (isRec) clean = `${clean} [recorrente]`
+    return { ...input, description: clean }
+  }
+  return input
+}
+
+export const transactionRepository: Repository<Transaction> = {
+  ...baseTransactionRepo,
+  list: () => baseTransactionRepo.list(),
+  create: (input) => baseTransactionRepo.create(formatTxPayload(input)),
+  update: (id, patch) => baseTransactionRepo.update(id, formatTxPayload(patch)),
+  insertMany: (items) => baseTransactionRepo.insertMany(items.map((i) => formatTxPayload(i))),
+}
 
 // ---------- V2 ----------
 

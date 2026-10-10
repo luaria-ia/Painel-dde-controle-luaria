@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, Select } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
@@ -34,6 +35,8 @@ export function TransactionFormModal({ open, onClose, transaction, type = 'recei
         projectId: transaction?.projectId ?? defaults?.projectId ?? '',
         clientId: transaction?.clientId ?? defaults?.clientId ?? '',
         status: transaction?.status ?? ((t === 'receita' ? 'recebido' : 'pago') as TransactionStatus),
+        recurring: transaction?.recurring ?? (transaction?.recurrencePeriod === 'mensal' || transaction?.category?.toLowerCase() === 'mensalidade') ?? false,
+        recurringDay: transaction?.recurringDay ? String(transaction.recurringDay) : (transaction?.date ? String(parseInt(transaction.date.split('-')[2], 10)) : ''),
       }
     },
     open ? (transaction?.id ?? `new-${type}`) : null,
@@ -41,9 +44,12 @@ export function TransactionFormModal({ open, onClose, transaction, type = 'recei
 
   const isIncome = values.type === 'receita'
   const statusMap = isIncome ? INCOME_STATUS : EXPENSE_STATUS
-  // Sugestões: categorias padrão + categorias já usadas pelo usuário.
+  // Sugestões: categorias padrão + categorias já usadas pelo usuário + categorias de recorrência.
+  const baseSuggestions = isIncome
+    ? ['Mensalidade', 'Implementação / Setup', ...INCOME_CATEGORIES]
+    : ['Assinatura / Ferramentas', 'Servidores / APIs', ...EXPENSE_CATEGORIES]
   const categorySuggestions = Array.from(
-    new Set([...(isIncome ? INCOME_CATEGORIES : EXPENSE_CATEGORIES), ...transactions.filter((t) => t.type === values.type).map((t) => t.category)]),
+    new Set([...baseSuggestions, ...transactions.filter((t) => t.type === values.type).map((t) => t.category)]),
   ).filter(Boolean)
 
   const switchType = (t: TransactionType) =>
@@ -59,15 +65,21 @@ export function TransactionFormModal({ open, onClose, transaction, type = 'recei
     if (Object.keys(errs).length) return setErrors(errs)
 
     setSubmitting(true)
+    const recDay = values.recurring
+      ? (values.recurringDay ? parseInt(values.recurringDay, 10) : parseInt(values.date.split('-')[2], 10))
+      : null
     const payload = {
       type: values.type,
       description: values.description.trim(),
       amountCents: amountCents!,
       date: values.date,
-      category: values.category.trim() || 'Outros',
+      category: values.category.trim() || (values.recurring ? (isIncome ? 'Mensalidade' : 'Ferramentas') : 'Outros'),
       projectId: values.projectId || null,
       clientId: isIncome ? values.clientId || null : null,
       status: values.status,
+      recurring: values.recurring,
+      recurrencePeriod: (values.recurring ? 'mensal' : 'nenhuma') as 'mensal' | 'nenhuma',
+      recurringDay: recDay && !isNaN(recDay) ? recDay : null,
     }
     const result = editing ? await updateTransaction(transaction!.id, payload) : await createTransaction(payload)
     setSubmitting(false)
@@ -169,6 +181,56 @@ export function TransactionFormModal({ open, onClose, transaction, type = 'recei
                 />
               )}
             </Field>
+          )}
+        </div>
+
+        {/* Recorrência Mensal (Opcional) */}
+        <div className="rounded-xl border border-line bg-surface-subtle/50 p-3.5 sm:p-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 rounded border-line text-accent focus:ring-accent"
+              checked={values.recurring}
+              onChange={(e) => {
+                const checked = e.target.checked
+                setValues((v) => ({
+                  ...v,
+                  recurring: checked,
+                  category: checked && !v.category ? (v.type === 'receita' ? 'Mensalidade' : 'Assinatura / Ferramentas') : v.category,
+                  recurringDay: checked && !v.recurringDay ? String(parseInt(v.date.split('-')[2], 10) || 10) : v.recurringDay,
+                }))
+              }}
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-fg">Lançamento recorrente mensal (Mensalidade)</span>
+                <span className="rounded bg-accent/10 px-1.5 py-0.5 text-[10px] font-semibold text-accent uppercase tracking-wider">Opcional</span>
+              </div>
+              <p className="mt-0.5 text-[12px] text-muted">
+                {isIncome
+                  ? 'Mensalidade de cliente (manutenção, suporte e evolução de IA todo mês, além do valor de implementação).'
+                  : 'Despesa fixa recorrente da Luaria.IA (assinatura de ferramenta, infraestrutura, servidores ou APIs).'}
+              </p>
+            </div>
+          </label>
+
+          {values.recurring && (
+            <div className="mt-3.5 border-t border-line/60 pt-3">
+              <Field label="Dia do vencimento / cobrança todo mês" hint="Dia entre 1 e 31">
+                {(id) => (
+                  <Input
+                    id={id}
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={values.recurringDay}
+                    placeholder="Ex.: 10"
+                    onChange={(e) => set('recurringDay', e.target.value)}
+                  />
+                )}
+              </Field>
+            </div>
           )}
         </div>
       </div>
