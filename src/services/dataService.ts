@@ -135,6 +135,25 @@ async function ensureDefaultAutomations() {
 
 let seeding: Promise<void> | null = null
 
+async function purgeLegacyData() {
+  try {
+    const existing = await projectRepository.list()
+    const legacy = existing.filter((p) => {
+      const n = p.name.trim().toLowerCase()
+      return n === 'med resumos' || n === 'social media'
+    })
+    for (const lp of legacy) {
+      await projectRepository.remove(lp.id)
+    }
+    const luariaProj = existing.find((p) => p.name.trim().toLowerCase() === 'luaria')
+    if (luariaProj) {
+      await projectRepository.update(luariaProj.id, { name: 'Luaria.IA' })
+    }
+  } catch (err) {
+    console.warn('[dataService] erro ao limpar legado:', err)
+  }
+}
+
 /**
  * Aplica os dados iniciais no primeiro acesso da conta. Não recria dados apagados.
  * Protegido contra execução dupla (StrictMode / abas) por promessa em andamento
@@ -142,6 +161,7 @@ let seeding: Promise<void> | null = null
  */
 export function ensureSeeded(): Promise<void> {
   seeding ??= (async () => {
+    await purgeLegacyData()
     const settings = await settingsRepository.get()
     if (settings.seeded) {
       // Conta existente: não injeta exemplos novos (o usuário pode carregá-los em Configurações).

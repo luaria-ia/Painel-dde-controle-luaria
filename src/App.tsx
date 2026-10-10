@@ -36,18 +36,6 @@ const MarketRadarPage = lazy(() => import('@/pages/MarketRadarPage').then((m) =>
 const AssistantPage = lazy(() => import('@/pages/AssistantPage').then((m) => ({ default: m.AssistantPage })))
 const KnowledgePage = lazy(() => import('@/pages/KnowledgePage').then((m) => ({ default: m.KnowledgePage })))
 const AutomationsPage = lazy(() => import('@/pages/AutomationsPage').then((m) => ({ default: m.AutomationsPage })))
-// Aprendizado
-const StudiesLayout = lazy(() => import('@/pages/studies/StudiesLayout').then((m) => ({ default: m.StudiesLayout })))
-const StudiesPage = lazy(() => import('@/pages/studies/StudiesPage').then((m) => ({ default: m.StudiesPage })))
-const StudyTrackPage = lazy(() => import('@/pages/studies/StudyTrackPage').then((m) => ({ default: m.StudyTrackPage })))
-const StudyModulePage = lazy(() => import('@/pages/studies/StudyModulePage').then((m) => ({ default: m.StudyModulePage })))
-const StudyLessonPage = lazy(() => import('@/pages/studies/StudyLessonPage').then((m) => ({ default: m.StudyLessonPage })))
-const StudyExercisePage = lazy(() => import('@/pages/studies/StudyExercisePage').then((m) => ({ default: m.StudyExercisePage })))
-const StudyProjectPage = lazy(() => import('@/pages/studies/StudyProjectPage').then((m) => ({ default: m.StudyProjectPage })))
-const StudyProjectsPage = lazy(() => import('@/pages/studies/StudyProjectsPage').then((m) => ({ default: m.StudyProjectsPage })))
-const StudySchedulePage = lazy(() => import('@/pages/studies/StudySchedulePage').then((m) => ({ default: m.StudySchedulePage })))
-const StudyToolsPage = lazy(() => import('@/pages/studies/StudyToolsPage').then((m) => ({ default: m.StudyToolsPage })))
-const LibraryPage = lazy(() => import('@/pages/studies/LibraryPage').then((m) => ({ default: m.LibraryPage })))
 
 /** Área logada. O `key` garante que trocar de usuário descarta todo o estado anterior. */
 function PrivateApp() {
@@ -91,18 +79,6 @@ export default function App() {
                 <Route path="assistente" element={<AssistantPage />} />
                 <Route path="conhecimento" element={<KnowledgePage />} />
                 <Route path="automacoes" element={<AutomationsPage />} />
-                <Route element={<StudiesLayout />}>
-                  <Route path="estudos" element={<StudiesPage />} />
-                  <Route path="estudos/:trackId" element={<StudyTrackPage />} />
-                  <Route path="estudos/:trackId/projeto" element={<StudyProjectPage />} />
-                  <Route path="estudos/:trackId/cronograma" element={<StudySchedulePage />} />
-                  <Route path="estudos/:trackId/:moduleKey" element={<StudyModulePage />} />
-                  <Route path="estudos/:trackId/:moduleKey/aula/:lessonKey" element={<StudyLessonPage />} />
-                  <Route path="estudos/:trackId/:moduleKey/exercicio" element={<StudyExercisePage />} />
-                  <Route path="biblioteca" element={<LibraryPage />} />
-                  <Route path="projetos-de-estudo" element={<StudyProjectsPage />} />
-                  <Route path="ferramentas-ia" element={<StudyToolsPage />} />
-                </Route>
                 <Route path="configuracoes" element={<SettingsPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>

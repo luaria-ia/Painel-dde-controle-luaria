@@ -1,9 +1,6 @@
 import {
   BarChart3,
   Compass,
-  GraduationCap,
-  Library,
-  Target,
   Bot,
   Brain,
   Zap,
@@ -15,7 +12,6 @@ import {
   ListChecks,
   Megaphone,
   Settings,
-  Sparkles,
   Users,
   Wallet,
   type LucideIcon,
@@ -108,17 +104,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/financeiro', label: 'Financeiro', icon: Wallet },
       { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },
-    ],
-  },
-  {
-    id: 'aprendizado',
-    label: 'Aprendizado',
-    defaultOpen: true,
-    items: [
-      { to: '/estudos', label: 'Estudos', icon: GraduationCap },
-      { to: '/biblioteca', label: 'Biblioteca', icon: Library },
-      { to: '/projetos-de-estudo', label: 'Projetos de estudo', icon: Target },
-      { to: '/ferramentas-ia', label: 'Ferramentas de IA', icon: Sparkles },
     ],
   },
 ]
