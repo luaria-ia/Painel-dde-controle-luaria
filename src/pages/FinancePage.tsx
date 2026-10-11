@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Clock, Hourglass, Plus, RefreshCw, Search, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
+import { ArrowRight, Clock, Hourglass, Plus, Search, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { AssistantPanel } from '@/components/ai/AssistantPanel'
 import { FinancialCard } from '@/components/finance/FinancialCard'
 import { MonthlyChart } from '@/components/finance/MonthlyChart'
@@ -74,51 +74,6 @@ export function FinancePage() {
             <FinancialCard label="A pagar" cents={summary.aPagarCents} icon={Hourglass} tone="warning" hint="Despesas em aberto" />
           </section>
 
-          {/* Previsibilidade & Recorrência Mensal */}
-          <section aria-label="Recorrência e MRR" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="flex items-center gap-3.5 rounded-xl border border-line bg-surface p-4 shadow-xs">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
-                <RefreshCw className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[12px] font-medium text-subtle uppercase tracking-wider">MRR · Mensalidades de Clientes</p>
-                <p className="text-xl font-bold tabular tracking-tight text-fg">
-                  {formatCurrency(summary.mrrCents)}
-                  <span className="text-xs font-normal text-muted">/mês</span>
-                </p>
-                <p className="text-[12px] text-muted">Manutenção e suporte recorrente</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3.5 rounded-xl border border-line bg-surface p-4 shadow-xs">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400">
-                <TrendingDown className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[12px] font-medium text-subtle uppercase tracking-wider">Custos Fixos · Despesas Recorrentes</p>
-                <p className="text-xl font-bold tabular tracking-tight text-fg">
-                  {formatCurrency(summary.despesasRecorrentesCents)}
-                  <span className="text-xs font-normal text-muted">/mês</span>
-                </p>
-                <p className="text-[12px] text-muted">Servidores, ferramentas e APIs de IA</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3.5 rounded-xl border border-line bg-surface p-4 shadow-xs">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
-                <Wallet className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[12px] font-medium text-subtle uppercase tracking-wider">Margem Recorrente Líquida</p>
-                <p className="text-xl font-bold tabular tracking-tight text-emerald-600 dark:text-emerald-400">
-                  {formatCurrency(summary.margemRecorrenteCents)}
-                  <span className="text-xs font-normal text-muted">/mês</span>
-                </p>
-                <p className="text-[12px] text-muted">Lucro mensal contratado</p>
-              </div>
-            </div>
-          </section>
-
           <div className="mt-6">
             <AssistantPanel
               scope={{ type: 'finance' }}
@@ -174,7 +129,6 @@ function TransactionsTab({ type, onCreate }: { type: TransactionType; onCreate: 
   const [projectId, setProjectId] = useState('')
   const [month, setMonth] = useState('')
   const [category, setCategory] = useState('')
-  const [recurrenceFilter, setRecurrenceFilter] = useState<'all' | 'recurring' | 'one_time'>('all')
 
   const ofType = transactions.filter((t) => t.type === type)
   const months = Array.from(new Set(ofType.map((t) => monthKey(t.date)))).sort().reverse()
@@ -182,21 +136,16 @@ function TransactionsTab({ type, onCreate }: { type: TransactionType; onCreate: 
 
   const q = normalize(query.trim())
   const filtered = recentTransactions(
-    ofType.filter((t) => {
-      const isRec = Boolean(t.recurring || t.recurrencePeriod === 'mensal' || t.category?.toLowerCase() === 'mensalidade')
-      const matchesRec =
-        recurrenceFilter === 'all' ? true : recurrenceFilter === 'recurring' ? isRec : !isRec
-      return (
-        (!q || normalize(`${t.description} ${t.category}`).includes(q)) &&
-        (!status || t.status === status) &&
-        (!projectId || (projectId === '_none' ? !t.projectId : t.projectId === projectId)) &&
-        (!month || monthKey(t.date) === month) &&
-        (!category || t.category === category) &&
-        matchesRec
-      )
-    }),
-    Infinity,
-  )
+      ofType.filter(
+        (t) =>
+          (!q || normalize(`${t.description} ${t.category}`).includes(q)) &&
+          (!status || t.status === status) &&
+          (!projectId || (projectId === '_none' ? !t.projectId : t.projectId === projectId)) &&
+          (!month || monthKey(t.date) === month) &&
+          (!category || t.category === category),
+      ),
+      Infinity,
+    )
 
   const total = filtered.reduce((acc, t) => acc + t.amountCents, 0)
 
@@ -207,17 +156,6 @@ function TransactionsTab({ type, onCreate }: { type: TransactionType; onCreate: 
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-subtle" />
           <Input aria-label="Buscar" className="h-8 pl-9 text-[13px]" placeholder="Buscar…" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-        <Select
-          compact
-          aria-label="Tipo de cobrança"
-          value={recurrenceFilter}
-          options={[
-            { value: 'all', label: 'Todas as cobranças' },
-            { value: 'recurring', label: type === 'receita' ? '🔁 Mensalidades (MRR)' : '🔁 Custos Recorrentes' },
-            { value: 'one_time', label: type === 'receita' ? '⚡ Implementações / Pontuais' : '⚡ Despesas Pontuais' },
-          ]}
-          onChange={(e) => setRecurrenceFilter(e.target.value as 'all' | 'recurring' | 'one_time')}
-        />
         <Select compact aria-label="Status" value={status} placeholder="Qualquer status" options={Object.entries(statusMap).map(([value, s]) => ({ value, label: s.label }))} onChange={(e) => setStatus(e.target.value)} />
         <Select
           compact

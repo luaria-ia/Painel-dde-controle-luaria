@@ -80,7 +80,6 @@ export type TransactionType = 'receita' | 'despesa'
 export type IncomeStatus = 'recebido' | 'pendente' | 'atrasado'
 export type ExpenseStatus = 'pago' | 'a_pagar'
 export type TransactionStatus = IncomeStatus | ExpenseStatus
-export type RecurrencePeriod = 'mensal' | 'nenhuma'
 
 export interface Transaction extends BaseEntity {
   type: TransactionType
@@ -92,11 +91,6 @@ export interface Transaction extends BaseEntity {
   projectId: ID | null
   clientId: ID | null
   status: TransactionStatus
-  /** Se o lançamento se repete mensalmente (ex.: mensalidade de cliente ou assinatura fixa). */
-  recurring?: boolean
-  recurrencePeriod?: RecurrencePeriod
-  /** Dia do vencimento ou cobrança no mês (1 a 31). */
-  recurringDay?: number | null
 }
 
 // ---------- Configurações ----------
