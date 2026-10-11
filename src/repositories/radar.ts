@@ -59,7 +59,7 @@ export const INITIAL_RADAR_OPPORTUNITIES: RadarOpportunity[] = [
     ],
     createdAt: '2026-10-08T14:00:00.000Z',
     updatedAt: '2026-10-09T18:00:00.000Z',
-    isDemo: false,
+    isDemo: true,
   },
 
   // 2. Oportunidade Workana - Integração de Sistemas & Notificações
@@ -106,7 +106,7 @@ export const INITIAL_RADAR_OPPORTUNITIES: RadarOpportunity[] = [
     ],
     createdAt: '2026-10-07T10:00:00.000Z',
     updatedAt: '2026-10-08T11:00:00.000Z',
-    isDemo: false,
+    isDemo: true,
   },
 
   // 3. Prospecção Direta de Empresa - Clínica Médica & Estética
@@ -159,7 +159,7 @@ export const INITIAL_RADAR_OPPORTUNITIES: RadarOpportunity[] = [
     ],
     createdAt: '2026-10-06T15:20:00.000Z',
     updatedAt: '2026-10-09T14:10:00.000Z',
-    isDemo: false,
+    isDemo: true,
   },
 
   // 4. Oportunidade Workana Fora de Escopo (Exemplo educativo de filtragem inteligente)
@@ -207,25 +207,55 @@ export const INITIAL_RADAR_OPPORTUNITIES: RadarOpportunity[] = [
     ],
     createdAt: '2026-10-05T17:40:00.000Z',
     updatedAt: '2026-10-05T18:00:00.000Z',
-    isDemo: false,
+    isDemo: true,
   },
 ]
 
+const INITIALIZED_KEY = 'business_os_radar_initialized'
+
+let memoryStore: RadarOpportunity[] | null = null
+
 function readLocal(): RadarOpportunity[] {
-  if (typeof localStorage === 'undefined') return INITIAL_RADAR_OPPORTUNITIES
+  if (typeof localStorage === 'undefined') {
+    if (memoryStore !== null) {
+      return memoryStore
+    }
+    memoryStore = [...INITIAL_RADAR_OPPORTUNITIES]
+    return memoryStore
+  }
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return INITIAL_RADAR_OPPORTUNITIES
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_RADAR_OPPORTUNITIES
+    const initialized = localStorage.getItem(INITIALIZED_KEY)
+
+    // Se é a primeira vez que a aplicação roda e nunca foi inicializada, grava o seed inicial
+    if (raw === null && !initialized) {
+      localStorage.setItem(INITIALIZED_KEY, 'true')
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_RADAR_OPPORTUNITIES))
+      memoryStore = [...INITIAL_RADAR_OPPORTUNITIES]
+      return INITIAL_RADAR_OPPORTUNITIES
+    }
+
+    if (raw !== null) {
+      const parsed = JSON.parse(raw)
+      // Se for um array (mesmo que vazio []), respeitamos a escolha do usuário!
+      if (Array.isArray(parsed)) {
+        memoryStore = parsed
+        return parsed
+      }
+    }
+    memoryStore = []
+    return []
   } catch {
-    return INITIAL_RADAR_OPPORTUNITIES
+    memoryStore = []
+    return []
   }
 }
 
 function writeLocal(list: RadarOpportunity[]): void {
+  memoryStore = list
   if (typeof localStorage === 'undefined') return
   try {
+    localStorage.setItem(INITIALIZED_KEY, 'true')
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
   } catch {
     /* ignore quota issues */
@@ -239,8 +269,16 @@ export const radarRepository: Repository<RadarOpportunity> = {
         .from('radar_opportunities' as any)
         .select('*')
         .order('priority_score', { ascending: false })
-      if (!error && data && data.length > 0) {
-        return data.map((r: any) => fromRow<RadarOpportunity>(r))
+      if (!error && Array.isArray(data)) {
+        if (data.length > 0) {
+          return data.map((r: any) => fromRow<RadarOpportunity>(r))
+        }
+        // Se a tabela existe no banco e está vazia:
+        // Verifica se já foi inicializada alguma vez
+        const isInit = typeof localStorage !== 'undefined' && localStorage.getItem(INITIALIZED_KEY) === 'true'
+        if (isInit) {
+          return []
+        }
       }
     } catch {
       /* fallback to local storage */

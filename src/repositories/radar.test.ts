@@ -48,4 +48,10 @@ describe('Módulo K - Radar de Prospecção Luaria.IA', () => {
     expect(csv).toContain('Título,Cliente/Empresa,Origem')
     expect(csv).toContain('workana')
   })
+
+  it('mantém a lista vazia após remoção de todos os itens e não ressuscita dados apagados', async () => {
+    await radarRepository.removeAll()
+    const emptyList = await radarRepository.list()
+    expect(emptyList).toEqual([])
+  })
 })

@@ -30,7 +30,7 @@ import {
   RADAR_STATUS_COLORS,
   RADAR_STATUS_LABELS,
 } from '@/lib/radarScore'
-import { exportRadarToCsv, exportRadarToJson } from '@/repositories/radar'
+import { exportRadarToCsv, exportRadarToJson, INITIAL_RADAR_OPPORTUNITIES } from '@/repositories/radar'
 import { useData } from '@/store/useData'
 import type {
   FitLuaria,
@@ -409,19 +409,36 @@ export function MarketRadarPage() {
 
           {/* VISUALIZAÇÃO EM KANBAN */}
           {layoutMode === 'kanban' ? (
-            <RadarKanbanBoard
-              opportunities={filteredOpportunities}
-              onSelectOpportunity={(opp) => {
-                setSelectedOpportunity(opp)
-                setOpportunityModalOpen(true)
-              }}
-              onAnalyzeAi={(opp) => {
-                setAnalyzingOpportunity(opp)
-                setAiModalOpen(true)
-              }}
-              onSendToCrm={handleSendToCrm}
-              onChangeStatus={(id, newStatus) => updateRadarOpportunity(id, { status: newStatus })}
-            />
+            radarOpportunities.length === 0 ? (
+              <div className="rounded-2xl border border-line bg-surface p-12 text-center flex flex-col items-center justify-center gap-2 shadow-card">
+                <p className="text-sm font-semibold text-foreground">Nenhuma oportunidade no Radar de Prospecção</p>
+                <p className="text-xs text-muted max-w-sm">
+                  Todas as oportunidades foram excluídas. Você pode cadastrar uma nova oportunidade ou restaurar os exemplos iniciais da Luaria.IA.
+                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="mt-2 text-xs"
+                  onClick={() => importRadarOpportunities(INITIAL_RADAR_OPPORTUNITIES)}
+                >
+                  Restaurar oportunidades de exemplo
+                </Button>
+              </div>
+            ) : (
+              <RadarKanbanBoard
+                opportunities={filteredOpportunities}
+                onSelectOpportunity={(opp) => {
+                  setSelectedOpportunity(opp)
+                  setOpportunityModalOpen(true)
+                }}
+                onAnalyzeAi={(opp) => {
+                  setAnalyzingOpportunity(opp)
+                  setAiModalOpen(true)
+                }}
+                onSendToCrm={handleSendToCrm}
+                onChangeStatus={(id, newStatus) => updateRadarOpportunity(id, { status: newStatus })}
+              />
+            )
           ) : (
             /* VISUALIZAÇÃO EM TABELA */
             <div className="rounded-2xl border border-line bg-surface shadow-card overflow-hidden">
@@ -442,8 +459,29 @@ export function MarketRadarPage() {
                   <tbody className="divide-y divide-line">
                     {filteredOpportunities.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="py-12 text-center text-muted">
-                          Nenhuma oportunidade encontrada com os filtros selecionados.
+                        <td colSpan={8} className="py-12 text-center">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <p className="text-sm font-semibold text-foreground">
+                              {radarOpportunities.length === 0
+                                ? 'Nenhuma oportunidade no Radar de Prospecção'
+                                : 'Nenhuma oportunidade encontrada com os filtros selecionados'}
+                            </p>
+                            <p className="text-xs text-muted max-w-sm">
+                              {radarOpportunities.length === 0
+                                ? 'Todas as oportunidades foram excluídas. Você pode cadastrar uma nova oportunidade ou restaurar os exemplos iniciais.'
+                                : 'Tente alterar os termos de busca ou remover os filtros aplicados.'}
+                            </p>
+                            {radarOpportunities.length === 0 && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="mt-2 text-xs"
+                                onClick={() => importRadarOpportunities(INITIAL_RADAR_OPPORTUNITIES)}
+                              >
+                                Restaurar oportunidades de exemplo
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ) : (
